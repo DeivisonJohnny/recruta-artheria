@@ -1,0 +1,124 @@
+
+generator client {
+  provider = "prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  searches      Search[]
+  jobs          Job[]
+
+  @@map("users")
+}
+
+model LinkedInProfile {
+  id                String    @id @default(cuid())
+  linkedinId        String    @unique // ID do LinkedIn (ex: deivisonjohnny)
+  fullName          String?
+  headline          String?
+  location          String?
+  photoUrl          String?
+  about             String?
+  experience        Json?     // Array de experiências
+  education         Json?     // Array de educação
+  skills            Json?     // Array de skills
+  languages         Json?     // Array de idiomas
+  certifications    Json?     // Array de certificações
+  rawData           Json?     // Dados brutos da API do ScrapingDog
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  searchResults     SearchResult[]
+  jobCandidates     JobCandidate[]
+
+  @@map("linkedin_profiles")
+}
+
+model Search {
+  id            String    @id @default(cuid())
+  userId        String
+  title         String
+  profession    String?
+  location      String?
+  technologies  String[]  // Array de tecnologias
+  keywords      String[]  // Palavras-chave adicionais
+  createdAt     DateTime  @default(now())
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  results       SearchResult[]
+
+  @@map("searches")
+  @@index([userId])
+}
+
+model SearchResult {
+  id                String    @id @default(cuid())
+  searchId          String
+  profileId         String
+  linkedinUrl       String    // URL completa do perfil
+  relevanceScore    Float?    // Score de relevância (opcional, para AI)
+  createdAt         DateTime  @default(now())
+
+  search            Search            @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  profile           LinkedInProfile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([searchId, profileId])
+  @@map("search_results")
+  @@index([searchId])
+  @@index([profileId])
+}
+
+model Job {
+  id                String    @id @default(cuid())
+  userId            String
+  title             String
+  description       String
+  requirements      String[]  // Array de requisitos
+  location          String?
+  technologies      String[]  // Tecnologias necessárias
+  experienceLevel   String?   // Junior, Pleno, Senior, etc.
+  employmentType    String?   // CLT, PJ, etc.
+  salaryRange       String?
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  candidates        JobCandidate[]
+
+  @@map("jobs")
+  @@index([userId])
+  @@index([isActive])
+}
+
+model JobCandidate {
+  id                String    @id @default(cuid())
+  jobId             String
+  profileId         String
+  aiAnalysis        String?   // Análise do Gemini AI
+  matchScore        Float?    // Score de compatibilidade (0-100)
+  status            String    @default("pending") // pending, reviewed, contacted, rejected
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  job               Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  profile           LinkedInProfile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, profileId])
+  @@map("job_candidates")
+  @@index([jobId])
+  @@index([profileId])
+  @@index([status])
+}
