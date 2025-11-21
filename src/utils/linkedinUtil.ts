@@ -11,6 +11,10 @@ export class LinkedInScraper {
     console.log("✅ LinkedInScraper inicializado com navegador compartilhado");
   }
 
+  async isLoggedIn(): Promise<boolean> {
+    return await BrowserManager.isLoggedIn();
+  }
+
   async searchProfiles(config: SearchConfig): Promise<LinkedInProfile[]> {
     if (!this.page) {
       throw new Error("Scraper não inicializado. Chame initialize() primeiro.");
