@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { useSession, signOut } from 'next-auth/react';
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { useSession, signOut } from "next-auth/react";
 import {
   LayoutDashboard,
   Search,
@@ -13,23 +13,26 @@ import {
   Sparkles,
   ChevronDown,
   ChevronRight,
-} from 'lucide-react';
+  Users,
+} from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/collapsible";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 const sidebarAnimation = {
-  menuTrigger: 'transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]',
-  chevron: 'transition-transform duration-300',
-  menuItem: 'transition-all duration-200 hover:translate-x-1',
-  logo: 'transition-transform duration-300 hover:rotate-12',
-  avatar: 'transition-all duration-300 hover:scale-110 hover:shadow-lg',
-  logoutButton: 'transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]',
+  menuTrigger:
+    "transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]",
+  chevron: "transition-transform duration-300",
+  menuItem: "transition-all duration-200 hover:translate-x-1",
+  logo: "transition-transform duration-300 hover:rotate-12",
+  avatar: "transition-all duration-300 hover:scale-110 hover:shadow-lg",
+  logoutButton:
+    "transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]",
 };
 
 interface SubMenuItem {
@@ -45,14 +48,15 @@ export default function Sidebar() {
 
   const handleSignOut = async () => {
     await signOut({ redirect: false });
-    router.push('/auth/signin');
+    router.push("/auth/signin");
   };
 
   const subMenuItems: SubMenuItem[] = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Pesquisar Candidatos', href: '/candidates/search', icon: Search },
-    { name: 'Minhas Pesquisas', href: '/searches', icon: FileText },
-    { name: 'Vagas', href: '/jobs', icon: Briefcase },
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Pesquisar Candidatos", href: "/candidates/search", icon: Search },
+    { name: "Banco de Talentos", href: "/candidates", icon: Users },
+    { name: "Minhas Pesquisas", href: "/searches", icon: FileText },
+    { name: "Vagas", href: "/jobs", icon: Briefcase },
   ];
 
   const isActive = (href: string) => router.pathname === href;
@@ -62,10 +66,12 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="h-16 flex items-center px-6 border-b border-gray-200">
         <div className="flex items-center gap-2">
-          <div className={cn(
-            "w-8 h-8 bg-linear-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center",
-            sidebarAnimation.logo
-          )}>
+          <div
+            className={cn(
+              "w-8 h-8 bg-linear-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center",
+              sidebarAnimation.logo
+            )}
+          >
             <Sparkles className="w-5 h-5 text-white" />
           </div>
           <h1 className="text-lg font-bold text-gray-900">Recruta Artheria</h1>
@@ -76,19 +82,23 @@ export default function Sidebar() {
       <nav className="flex-1 px-4 py-6">
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
           <CollapsibleTrigger className="w-full">
-            <div className={cn(
-              "flex items-center justify-between px-4 py-3 text-sm font-semibold rounded-xl hover:bg-gray-100",
-              sidebarAnimation.menuTrigger
-            )}>
+            <div
+              className={cn(
+                "flex items-center justify-between px-4 py-3 text-sm font-semibold rounded-xl hover:bg-gray-100",
+                sidebarAnimation.menuTrigger
+              )}
+            >
               <div className="flex items-center gap-3">
                 <Sparkles className="w-5 h-5 text-blue-600" />
                 <span className="text-gray-900">RecrutaIA</span>
               </div>
-              <ChevronDown className={cn(
-                "w-4 h-4 text-gray-500",
-                sidebarAnimation.chevron,
-                !isOpen && "-rotate-90"
-              )} />
+              <ChevronDown
+                className={cn(
+                  "w-4 h-4 text-gray-500",
+                  sidebarAnimation.chevron,
+                  !isOpen && "-rotate-90"
+                )}
+              />
             </div>
           </CollapsibleTrigger>
 
@@ -100,11 +110,11 @@ export default function Sidebar() {
                   key={item.name}
                   href={item.href}
                   className={cn(
-                    'flex items-center gap-3 px-4 py-3 ml-4 text-sm font-medium rounded-xl',
+                    "flex items-center gap-3 px-4 py-3 ml-4 text-sm font-medium rounded-xl",
                     sidebarAnimation.menuItem,
                     isActive(item.href)
-                      ? 'bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-md'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? "bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-md"
+                      : "text-gray-700 hover:bg-gray-100"
                   )}
                   style={{
                     animationDelay: `${index * 50}ms`,
@@ -124,17 +134,19 @@ export default function Sidebar() {
       {/* User section */}
       <div className="p-4">
         <div className="flex items-center mb-3 px-2 group cursor-pointer">
-          <div className={cn(
-            "w-10 h-10 rounded-full bg-linear-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-semibold shadow-sm",
-            sidebarAnimation.avatar
-          )}>
+          <div
+            className={cn(
+              "w-10 h-10 rounded-full bg-linear-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-semibold shadow-sm",
+              sidebarAnimation.avatar
+            )}
+          >
             {session?.user?.name?.[0]?.toUpperCase() ||
               session?.user?.email?.[0]?.toUpperCase() ||
-              'U'}
+              "U"}
           </div>
           <div className="ml-3 flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-900 truncate">
-              {session?.user?.name || 'Usuário'}
+              {session?.user?.name || "Usuário"}
             </p>
             <p className="text-xs text-gray-500 truncate">
               {session?.user?.email}
