@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { Mail, Lock, User, UserPlus, AlertCircle, Sparkles } from 'lucide-react';
 
 export default function SignUp() {
@@ -18,11 +19,13 @@ export default function SignUp() {
 
     if (password !== confirmPassword) {
       setError('As senhas não coincidem');
+      toast.error('As senhas não coincidem');
       return;
     }
 
     if (password.length < 6) {
       setError('A senha deve ter pelo menos 6 caracteres');
+      toast.error('A senha deve ter pelo menos 6 caracteres');
       return;
     }
 
@@ -39,12 +42,15 @@ export default function SignUp() {
 
       if (!response.ok) {
         setError(data.message || 'Erro ao criar conta');
+        toast.error(data.message || 'Erro ao criar conta');
         return;
       }
 
+      toast.success('Conta criada com sucesso!');
       router.push('/auth/signin?registered=true');
     } catch (err) {
       setError('Erro ao criar conta');
+      toast.error('Erro ao criar conta');
     } finally {
       setLoading(false);
     }

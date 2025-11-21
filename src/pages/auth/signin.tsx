@@ -2,6 +2,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { Mail, Lock, LogIn, AlertCircle, Sparkles } from 'lucide-react';
 
 export default function SignIn() {
@@ -25,11 +26,14 @@ export default function SignIn() {
 
       if (result?.error) {
         setError('Credenciais inválidas');
+        toast.error('Credenciais inválidas');
       } else {
+        toast.success('Login realizado com sucesso!');
         router.push('/dashboard');
       }
     } catch (err) {
       setError('Erro ao fazer login');
+      toast.error('Erro ao fazer login');
     } finally {
       setLoading(false);
     }

@@ -1,27 +1,27 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../auth/[...nextauth]';
-import { prisma } from '@/lib/prisma';
+import type { NextApiRequest, NextApiResponse } from "next";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]";
+import { prisma } from "@/lib/prisma";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ message: "Method not allowed" });
   }
 
   const session = await getServerSession(req, res, authOptions);
 
   if (!session || !session.user) {
-    return res.status(401).json({ message: 'Unauthorized' });
+    return res.status(401).json({ message: "Unauthorized" });
   }
 
   try {
     const { title, profession, location, technologies, keywords } = req.body;
 
     if (!title) {
-      return res.status(400).json({ message: 'Title is required' });
+      return res.status(400).json({ message: "Title is required" });
     }
 
     // Construir query do LinkedIn
@@ -36,10 +36,13 @@ export default async function handler(
       queryParts.push(...keywords);
     }
 
-    const linkedinQuery = queryParts.join(' ');
+    const linkedinQuery = queryParts.join(" ");
 
     // Buscar perfis no LinkedIn usando ScrapingDog
-    const scrapingResults = await searchLinkedInProfiles(linkedinQuery, location);
+    const scrapingResults = await searchLinkedInProfiles(
+      linkedinQuery,
+      location
+    );
 
     // Salvar pesquisa no banco
     const search = await prisma.search.create({
@@ -94,8 +97,8 @@ export default async function handler(
       results: savedResults,
     });
   } catch (error) {
-    console.error('Search error:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+    console.error("Search error:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 }
 
@@ -103,35 +106,45 @@ export default async function handler(
 async function searchLinkedInProfiles(
   query: string,
   location?: string
-): Promise<Array<{ linkedinId: string; linkedinUrl: string; fullName?: string; headline?: string }>> {
+): Promise<
+  Array<{
+    linkedinId: string;
+    linkedinUrl: string;
+    fullName?: string;
+    headline?: string;
+  }>
+> {
   try {
-    console.log('🔍 Iniciando busca no LinkedIn com Puppeteer:', query);
+    console.log("🔍 Iniciando busca no LinkedIn com Puppeteer:", query);
 
     // Importar Puppeteer dinamicamente
-    const puppeteer = await import('puppeteer-extra');
-    const StealthPlugin = (await import('puppeteer-extra-plugin-stealth')).default;
+    const puppeteer = await import("puppeteer-extra");
+    const StealthPlugin = (await import("puppeteer-extra-plugin-stealth"))
+      .default;
 
     // Adicionar plugin stealth para evitar detecção
     puppeteer.default.use(StealthPlugin());
 
-    console.log('🚀 Abrindo navegador...');
+    console.log("🚀 Abrindo navegador...");
 
     const browser = await puppeteer.default.launch({
       headless: true,
       args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--disable-gpu',
-        '--window-size=1920x1080'
-      ]
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-accelerated-2d-canvas",
+        "--disable-gpu",
+        "--window-size=1920x1080",
+      ],
     });
 
     const page = await browser.newPage();
 
     // Configurar user agent
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    await page.setUserAgent(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    );
 
     // Configurar viewport
     await page.setViewport({ width: 1920, height: 1080 });
@@ -140,31 +153,36 @@ async function searchLinkedInProfiles(
     const searchQuery = encodeURIComponent(query);
     const linkedinSearchUrl = `https://www.linkedin.com/search/results/people/?keywords=${searchQuery}`;
 
-    console.log('🌐 Acessando LinkedIn:', linkedinSearchUrl);
+    console.log("🌐 Acessando LinkedIn:", linkedinSearchUrl);
 
     try {
       // Navegar para a página de busca
       await page.goto(linkedinSearchUrl, {
-        waitUntil: 'networkidle2',
-        timeout: 30000
+        waitUntil: "networkidle2",
+        timeout: 60000,
       });
 
-      console.log('⏳ Aguardando carregamento da página...');
+      console.log("⏳ Aguardando carregamento da página...");
 
       // Aguardar um pouco para garantir que o conteúdo foi carregado
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await new Promise((resolve) => setTimeout(resolve, 3000));
 
       // Extrair perfis da página
       const profiles = await page.evaluate(() => {
-        const results: Array<{ linkedinId: string; linkedinUrl: string; fullName?: string; headline?: string }> = [];
+        const results: Array<{
+          linkedinId: string;
+          linkedinUrl: string;
+          fullName?: string;
+          headline?: string;
+        }> = [];
 
         // Seletores possíveis para os cards de perfil
         const selectors = [
-          '.entity-result',
-          '.reusable-search__result-container',
-          '[data-chameleon-result-urn]',
-          '.search-result',
-          '.artdeco-entity-lockup'
+          ".entity-result",
+          ".reusable-search__result-container",
+          "[data-chameleon-result-urn]",
+          ".search-result",
+          ".artdeco-entity-lockup",
         ];
 
         let profileElements: Element[] = [];
@@ -178,38 +196,48 @@ async function searchLinkedInProfiles(
           }
         }
 
-        console.log(`Encontrados ${profileElements.length} elementos na página`);
+        console.log(
+          `Encontrados ${profileElements.length} elementos na página`
+        );
 
         for (const element of profileElements) {
           try {
             // Tentar encontrar o link do perfil
-            const linkElement = element.querySelector('a[href*="/in/"]') as HTMLAnchorElement;
+            const linkElement = element.querySelector(
+              'a[href*="/in/"]'
+            ) as HTMLAnchorElement;
 
             if (linkElement && linkElement.href) {
-              const match = linkElement.href.match(/linkedin\.com\/in\/([^\/\?]+)/);
+              const match = linkElement.href.match(
+                /linkedin\.com\/in\/([^\/\?]+)/
+              );
 
               if (match) {
                 const linkedinId = match[1];
                 const linkedinUrl = `https://www.linkedin.com/in/${linkedinId}`;
 
                 // Tentar extrair nome
-                const nameElement = element.querySelector('.entity-result__title-text, .artdeco-entity-lockup__title, [data-anonymize="person-name"]');
+                const nameElement = element.querySelector(
+                  '.entity-result__title-text, .artdeco-entity-lockup__title, [data-anonymize="person-name"]'
+                );
                 const fullName = nameElement?.textContent?.trim();
 
                 // Tentar extrair headline
-                const headlineElement = element.querySelector('.entity-result__primary-subtitle, .artdeco-entity-lockup__subtitle, [data-anonymize="job-title"]');
+                const headlineElement = element.querySelector(
+                  '.entity-result__primary-subtitle, .artdeco-entity-lockup__subtitle, [data-anonymize="job-title"]'
+                );
                 const headline = headlineElement?.textContent?.trim();
 
                 results.push({
                   linkedinId,
                   linkedinUrl,
                   fullName: fullName || undefined,
-                  headline: headline || undefined
+                  headline: headline || undefined,
                 });
               }
             }
           } catch (err) {
-            console.error('Erro ao processar elemento:', err);
+            console.error("Erro ao processar elemento:", err);
           }
         }
 
@@ -219,43 +247,45 @@ async function searchLinkedInProfiles(
       await browser.close();
 
       if (profiles.length === 0) {
-        console.warn('⚠️ Nenhum perfil encontrado com Puppeteer, usando resultados mock');
+        console.warn(
+          "⚠️ Nenhum perfil encontrado com Puppeteer, usando resultados mock"
+        );
         return generateMockLinkedInResults(query);
       }
 
       // Remover duplicatas
       const uniqueProfiles = Array.from(
-        new Map(profiles.map(p => [p.linkedinId, p])).values()
+        new Map(profiles.map((p) => [p.linkedinId, p])).values()
       ).slice(0, 25);
 
       console.log(`✅ ${uniqueProfiles.length} perfis únicos encontrados!`);
       return uniqueProfiles;
-
     } catch (error) {
-      console.error('❌ Erro ao acessar LinkedIn:', error);
+      console.error("❌ Erro ao acessar LinkedIn:", error);
       await browser.close();
       return generateMockLinkedInResults(query);
     }
-
   } catch (error) {
-    console.error('❌ Erro ao inicializar Puppeteer:', error);
+    console.error("❌ Erro ao inicializar Puppeteer:", error);
     return generateMockLinkedInResults(query);
   }
 }
 
 // Função auxiliar para gerar resultados mockados (fallback)
-function generateMockLinkedInResults(query: string): Array<{ linkedinId: string; linkedinUrl: string }> {
+function generateMockLinkedInResults(
+  query: string
+): Array<{ linkedinId: string; linkedinUrl: string }> {
   const mockProfiles = [
-    'joao-silva-dev',
-    'maria-santos-tech',
-    'pedro-oliveira-software',
-    'ana-costa-developer',
-    'carlos-ferreira-eng',
-    'julia-rodrigues-dev',
-    'rafael-almeida-tech',
-    'fernanda-lima-software',
-    'lucas-martins-dev',
-    'camila-souza-engineer',
+    "joao-silva-dev",
+    "maria-santos-tech",
+    "pedro-oliveira-software",
+    "ana-costa-developer",
+    "carlos-ferreira-eng",
+    "julia-rodrigues-dev",
+    "rafael-almeida-tech",
+    "fernanda-lima-software",
+    "lucas-martins-dev",
+    "camila-souza-engineer",
   ];
 
   // Retornar 5-10 resultados mockados
@@ -264,7 +294,7 @@ function generateMockLinkedInResults(query: string): Array<{ linkedinId: string;
     .sort(() => Math.random() - 0.5)
     .slice(0, numResults);
 
-  return selectedProfiles.map(id => ({
+  return selectedProfiles.map((id) => ({
     linkedinId: id,
     linkedinUrl: `https://www.linkedin.com/in/${id}`,
   }));

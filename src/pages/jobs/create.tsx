@@ -2,6 +2,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
+import { toast } from 'sonner';
 import { Briefcase, MapPin, Code, DollarSign, Clock, X, Save } from 'lucide-react';
 
 export default function CreateJob() {
@@ -63,12 +64,13 @@ export default function CreateJob() {
       const data = await response.json();
 
       if (response.ok) {
+        toast.success('Vaga criada com sucesso!');
         router.push('/jobs');
       } else {
-        alert(data.message || 'Erro ao criar vaga');
+        toast.error(data.message || 'Erro ao criar vaga');
       }
     } catch (error) {
-      alert('Erro ao criar vaga');
+      toast.error('Erro ao criar vaga');
     } finally {
       setLoading(false);
     }
