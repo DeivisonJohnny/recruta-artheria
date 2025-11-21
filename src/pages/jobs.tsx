@@ -51,7 +51,7 @@ export default function Jobs() {
   const fetchJobs = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/jobs");
+      const response = await fetch("/api/recrutaia/jobs");
       const data = await response.json();
 
       if (response.ok) {

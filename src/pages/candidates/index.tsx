@@ -42,7 +42,7 @@ export default function CandidatesList() {
   const fetchCandidates = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/candidates");
+      const response = await fetch("/api/recrutaia/candidates");
       if (response.ok) {
         const data = await response.json();
         setCandidates(data);

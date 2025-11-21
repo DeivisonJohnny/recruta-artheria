@@ -46,7 +46,7 @@ export default function Searches() {
   const fetchSearches = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/searches");
+      const response = await fetch("/api/recrutaia/searches");
       const data = await response.json();
 
       if (response.ok) {

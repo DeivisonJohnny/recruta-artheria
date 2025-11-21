@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
+import { authOptions } from "../../auth/[...nextauth]";
 import { prisma } from "@/lib/prisma";
 
 export default async function handler(
@@ -18,20 +18,21 @@ export default async function handler(
   }
 
   try {
-    const candidates = await prisma.linkedInProfile.findMany({
+    const searches = await prisma.search.findMany({
+      where: {
+        userId: (session.user as any).id,
+      },
+      include: {
+        results: true,
+      },
       orderBy: {
         createdAt: "desc",
       },
-      include: {
-        _count: {
-          select: { searchResults: true, jobCandidates: true },
-        },
-      },
     });
 
-    return res.status(200).json(candidates);
+    return res.status(200).json({ searches });
   } catch (error) {
-    console.error("Error fetching candidates:", error);
+    console.error("Fetch searches error:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 }

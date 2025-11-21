@@ -1,27 +1,27 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../../auth/[...nextauth]';
-import { prisma } from '@/lib/prisma';
+import type { NextApiRequest, NextApiResponse } from "next";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../../../auth/[...nextauth]";
+import { prisma } from "@/lib/prisma";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ message: 'Method not allowed' });
+  if (req.method !== "GET") {
+    return res.status(405).json({ message: "Method not allowed" });
   }
 
   const session = await getServerSession(req, res, authOptions);
 
   if (!session || !session.user) {
-    return res.status(401).json({ message: 'Unauthorized' });
+    return res.status(401).json({ message: "Unauthorized" });
   }
 
   try {
     const { linkedinId } = req.query;
 
-    if (!linkedinId || typeof linkedinId !== 'string') {
-      return res.status(400).json({ message: 'LinkedIn ID is required' });
+    if (!linkedinId || typeof linkedinId !== "string") {
+      return res.status(400).json({ message: "LinkedIn ID is required" });
     }
 
     // Verificar se o perfil já existe no banco
@@ -54,7 +54,9 @@ export default async function handler(
     const scrapingDogApiKey = process.env.SCRAPINGDOG_API_KEY;
 
     if (!scrapingDogApiKey) {
-      return res.status(500).json({ message: 'ScrapingDog API key not configured' });
+      return res
+        .status(500)
+        .json({ message: "ScrapingDog API key not configured" });
     }
 
     const scrapingDogUrl = `https://api.scrapingdog.com/profile?api_key=${scrapingDogApiKey}&id=${linkedinId}&type=profile&premium=false&webhook=false&fresh=false`;
@@ -63,7 +65,7 @@ export default async function handler(
 
     if (!response.ok) {
       return res.status(response.status).json({
-        message: 'Failed to fetch profile from ScrapingDog',
+        message: "Failed to fetch profile from ScrapingDog",
       });
     }
 
@@ -116,7 +118,7 @@ export default async function handler(
       fromCache: false,
     });
   } catch (error) {
-    console.error('Profile fetch error:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+    console.error("Profile fetch error:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 }

@@ -1,33 +1,43 @@
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
-import Layout from '@/components/Layout';
-import { toast } from 'sonner';
-import { Briefcase, MapPin, Code, DollarSign, Clock, X, Save } from 'lucide-react';
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import Layout from "@/components/Layout";
+import { toast } from "sonner";
+import {
+  Briefcase,
+  MapPin,
+  Code,
+  DollarSign,
+  Clock,
+  X,
+  Save,
+} from "lucide-react";
 
 export default function CreateJob() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    requirements: '',
-    location: '',
-    technologies: '',
-    experienceLevel: '',
-    employmentType: '',
-    salaryRange: '',
+    title: "",
+    description: "",
+    requirements: "",
+    location: "",
+    technologies: "",
+    experienceLevel: "",
+    employmentType: "",
+    salaryRange: "",
   });
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/auth/signin');
+    if (status === "unauthenticated") {
+      router.push("/auth/signin");
     }
   }, [status, router]);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     setFormData({
       ...formData,
@@ -40,20 +50,20 @@ export default function CreateJob() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/jobs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/recrutaia/jobs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: formData.title,
           description: formData.description,
           requirements: formData.requirements
-            .split('\n')
-            .map(r => r.trim())
+            .split("\n")
+            .map((r) => r.trim())
             .filter(Boolean),
           location: formData.location || null,
           technologies: formData.technologies
-            .split(',')
-            .map(t => t.trim())
+            .split(",")
+            .map((t) => t.trim())
             .filter(Boolean),
           experienceLevel: formData.experienceLevel || null,
           employmentType: formData.employmentType || null,
@@ -64,19 +74,19 @@ export default function CreateJob() {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success('Vaga criada com sucesso!');
-        router.push('/jobs');
+        toast.success("Vaga criada com sucesso!");
+        router.push("/jobs");
       } else {
-        toast.error(data.message || 'Erro ao criar vaga');
+        toast.error(data.message || "Erro ao criar vaga");
       }
     } catch (error) {
-      toast.error('Erro ao criar vaga');
+      toast.error("Erro ao criar vaga");
     } finally {
       setLoading(false);
     }
   };
 
-  if (status === 'loading') {
+  if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Carregando...</div>
@@ -97,7 +107,9 @@ export default function CreateJob() {
               <Briefcase className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Criar Nova Vaga</h1>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Criar Nova Vaga
+              </h1>
             </div>
           </div>
           <p className="text-gray-600">
@@ -108,7 +120,10 @@ export default function CreateJob() {
         <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="title" className="block text-sm font-semibold text-gray-700 mb-2">
+              <label
+                htmlFor="title"
+                className="block text-sm font-semibold text-gray-700 mb-2"
+              >
                 Título da Vaga *
               </label>
               <div className="relative">
@@ -129,7 +144,10 @@ export default function CreateJob() {
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-sm font-semibold text-gray-700 mb-2">
+              <label
+                htmlFor="description"
+                className="block text-sm font-semibold text-gray-700 mb-2"
+              >
                 Descrição da Vaga *
               </label>
               <textarea
@@ -145,7 +163,10 @@ export default function CreateJob() {
             </div>
 
             <div>
-              <label htmlFor="requirements" className="block text-sm font-semibold text-gray-700 mb-2">
+              <label
+                htmlFor="requirements"
+                className="block text-sm font-semibold text-gray-700 mb-2"
+              >
                 Requisitos (um por linha)
               </label>
               <textarea
@@ -161,7 +182,10 @@ export default function CreateJob() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label htmlFor="location" className="block text-sm font-semibold text-gray-700 mb-2">
+                <label
+                  htmlFor="location"
+                  className="block text-sm font-semibold text-gray-700 mb-2"
+                >
                   Localização
                 </label>
                 <div className="relative">
@@ -181,7 +205,10 @@ export default function CreateJob() {
               </div>
 
               <div>
-                <label htmlFor="experienceLevel" className="block text-sm font-semibold text-gray-700 mb-2">
+                <label
+                  htmlFor="experienceLevel"
+                  className="block text-sm font-semibold text-gray-700 mb-2"
+                >
                   Nível de Experiência
                 </label>
                 <select
@@ -201,7 +228,10 @@ export default function CreateJob() {
             </div>
 
             <div>
-              <label htmlFor="technologies" className="block text-sm font-semibold text-gray-700 mb-2">
+              <label
+                htmlFor="technologies"
+                className="block text-sm font-semibold text-gray-700 mb-2"
+              >
                 Tecnologias (separadas por vírgula)
               </label>
               <div className="relative">
@@ -222,7 +252,10 @@ export default function CreateJob() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label htmlFor="employmentType" className="block text-sm font-semibold text-gray-700 mb-2">
+                <label
+                  htmlFor="employmentType"
+                  className="block text-sm font-semibold text-gray-700 mb-2"
+                >
                   Tipo de Contratação
                 </label>
                 <div className="relative">
@@ -246,7 +279,10 @@ export default function CreateJob() {
               </div>
 
               <div>
-                <label htmlFor="salaryRange" className="block text-sm font-semibold text-gray-700 mb-2">
+                <label
+                  htmlFor="salaryRange"
+                  className="block text-sm font-semibold text-gray-700 mb-2"
+                >
                   Faixa Salarial
                 </label>
                 <div className="relative">
