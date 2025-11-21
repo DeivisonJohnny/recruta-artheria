@@ -98,35 +98,35 @@ export default function SearchCandidates() {
   return (
     <Layout>
       <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-              <Search className="w-6 h-6 text-white" />
+        <div className="mb-6">
+          <div className="flex items-center gap-2.5 mb-2">
+            <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+              <Search className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-gray-900">
                 Pesquisar Candidatos
               </h1>
             </div>
           </div>
-          <p className="text-gray-600">
+          <p className="text-sm text-gray-600">
             Busque perfis no LinkedIn por profissão, localização e tecnologias
           </p>
         </div>
 
         {/* Formulário de pesquisa */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-8 mb-8 shadow-sm">
-          <form onSubmit={handleSearch} className="space-y-6">
+        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6 shadow-sm">
+          <form onSubmit={handleSearch} className="space-y-4">
             <div>
               <label
                 htmlFor="title"
-                className="block text-sm font-semibold text-gray-700 mb-2"
+                className="block text-sm font-medium text-gray-700 mb-1.5"
               >
                 Título da Pesquisa *
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FileText className="h-5 w-5 text-gray-400" />
+                  <FileText className="h-4 w-4 text-gray-400" />
                 </div>
                 <input
                   type="text"
@@ -136,22 +136,22 @@ export default function SearchCandidates() {
                   onChange={handleInputChange}
                   required
                   placeholder="Ex: Desenvolvedores React em BH"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label
                   htmlFor="profession"
-                  className="block text-sm font-semibold text-gray-700 mb-2"
+                  className="block text-sm font-medium text-gray-700 mb-1.5"
                 >
                   Profissão
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <UserCircle2 className="h-5 w-5 text-gray-400" />
+                    <UserCircle2 className="h-4 w-4 text-gray-400" />
                   </div>
                   <input
                     type="text"
@@ -160,7 +160,7 @@ export default function SearchCandidates() {
                     value={formData.profession}
                     onChange={handleInputChange}
                     placeholder="Ex: Desenvolvedor"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   />
                 </div>
               </div>
@@ -168,13 +168,13 @@ export default function SearchCandidates() {
               <div>
                 <label
                   htmlFor="location"
-                  className="block text-sm font-semibold text-gray-700 mb-2"
+                  className="block text-sm font-medium text-gray-700 mb-1.5"
                 >
                   Localização
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <MapPin className="h-5 w-5 text-gray-400" />
+                    <MapPin className="h-4 w-4 text-gray-400" />
                   </div>
                   <input
                     type="text"
@@ -183,7 +183,7 @@ export default function SearchCandidates() {
                     value={formData.location}
                     onChange={handleInputChange}
                     placeholder="Ex: Belo Horizonte"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   />
                 </div>
               </div>
@@ -192,13 +192,13 @@ export default function SearchCandidates() {
             <div>
               <label
                 htmlFor="technologies"
-                className="block text-sm font-semibold text-gray-700 mb-2"
+                className="block text-sm font-medium text-gray-700 mb-1.5"
               >
                 Tecnologias (separadas por vírgula)
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Code className="h-5 w-5 text-gray-400" />
+                  <Code className="h-4 w-4 text-gray-400" />
                 </div>
                 <input
                   type="text"
@@ -207,7 +207,7 @@ export default function SearchCandidates() {
                   value={formData.technologies}
                   onChange={handleInputChange}
                   placeholder="Ex: Node, React, TypeScript"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 />
               </div>
             </div>
@@ -215,7 +215,7 @@ export default function SearchCandidates() {
             <div>
               <label
                 htmlFor="keywords"
-                className="block text-sm font-semibold text-gray-700 mb-2"
+                className="block text-sm font-medium text-gray-700 mb-1.5"
               >
                 Palavras-chave adicionais (separadas por vírgula)
               </label>
@@ -226,23 +226,23 @@ export default function SearchCandidates() {
                 value={formData.keywords}
                 onChange={handleInputChange}
                 placeholder="Ex: Senior, Full Stack"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-xl hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transition-all"
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 text-sm bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md transition-all"
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                   Pesquisando...
                 </>
               ) : (
                 <>
-                  <Search className="w-5 h-5" />
+                  <Search className="w-4 h-4" />
                   Pesquisar
                 </>
               )}
@@ -252,33 +252,33 @@ export default function SearchCandidates() {
 
         {/* Resultados */}
         {results.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-6">
-              <UserCircle2 className="w-6 h-6 text-blue-600" />
-              <h2 className="text-xl font-semibold text-gray-900">
+          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <UserCircle2 className="w-5 h-5 text-blue-600" />
+              <h2 className="text-lg font-semibold text-gray-900">
                 Resultados ({results.length})
               </h2>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {results.map((result, index) => (
                 <div
                   key={index}
-                  className="flex flex-col md:flex-row md:items-start justify-between p-5 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-blue-300 transition-all gap-4"
+                  className="flex flex-col md:flex-row md:items-start justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-all gap-3"
                 >
-                  <div className="flex-1 flex items-start gap-4">
+                  <div className="flex-1 flex items-start gap-3">
                     {result.imageUrl ? (
                       <img
                         src={result.imageUrl}
                         alt={result.name}
-                        className="w-16 h-16 rounded-full object-cover border border-gray-200 shadow-sm flex-shrink-0"
+                        className="w-12 h-12 rounded-full object-cover border border-gray-200 shadow-sm flex-shrink-0"
                       />
                     ) : (
-                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <UserCircle2 className="w-8 h-8 text-blue-600" />
+                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <UserCircle2 className="w-6 h-6 text-blue-600" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-semibold text-gray-900 truncate">
+                      <h3 className="text-base font-semibold text-gray-900 truncate">
                         {result.name || "Nome não disponível"}
                       </h3>
                       <p className="text-sm text-gray-600 mb-1 font-medium">
@@ -286,14 +286,14 @@ export default function SearchCandidates() {
                       </p>
 
                       {result.location && (
-                        <div className="flex items-center gap-1 text-sm text-gray-500 mb-2">
+                        <div className="flex items-center gap-1 text-xs text-gray-500 mb-1.5">
                           <MapPin className="w-3 h-3" />
                           <span>{result.location}</span>
                         </div>
                       )}
 
                       {result.summary && (
-                        <p className="text-sm text-gray-500 mb-3 line-clamp-2">
+                        <p className="text-xs text-gray-500 mb-2 line-clamp-2">
                           {result.summary}
                         </p>
                       )}
@@ -302,7 +302,7 @@ export default function SearchCandidates() {
                         href={result.profileUrl || result.linkedinUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 font-medium hover:underline"
+                        className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium hover:underline"
                       >
                         Ver Perfil LinkedIn
                         <ExternalLink className="w-3 h-3" />
@@ -316,9 +316,9 @@ export default function SearchCandidates() {
         )}
 
         {loading && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center shadow-sm">
-            <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
-            <p className="text-lg font-medium text-gray-900 mb-2">
+          <div className="bg-white rounded-xl border border-gray-200 p-8 text-center shadow-sm">
+            <Loader2 className="w-10 h-10 text-blue-600 animate-spin mx-auto mb-3" />
+            <p className="text-base font-medium text-gray-900 mb-1.5">
               Buscando perfis no LinkedIn...
             </p>
             <p className="text-sm text-gray-600">
