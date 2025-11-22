@@ -45,7 +45,8 @@ export default async function handler(
 
     // Monta as URLs dos perfis
     const profileUrls = profiles.map(
-      (p) => `https://www.linkedin.com/in/${p.linkedinId}`
+      (p: { id: string; linkedinId: string; fullName: string | null }) =>
+        `https://www.linkedin.com/in/${p.linkedinId}`
     );
 
     // Inicializa o scraper (usa singleton do BrowserManager)
