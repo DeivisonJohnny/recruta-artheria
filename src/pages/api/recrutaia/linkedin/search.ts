@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../auth/[...nextauth]";
 import { prisma } from "@/lib/prisma";
 import { LinkedInScraper } from "@/utils/linkedinUtil";
+import BrowserManager from "@/utils/browserManager";
 
 export default async function handler(
   req: NextApiRequest,
@@ -55,6 +56,11 @@ export default async function handler(
     });
 
     console.log(`✅ Encontrados ${scrapingResults.length} perfis.`);
+
+    // Marca sessão como logada após busca bem-sucedida
+    if (scrapingResults.length > 0) {
+      BrowserManager.markAsLoggedIn();
+    }
 
     // Salvar pesquisa no banco
     const search = await prisma.search.create({

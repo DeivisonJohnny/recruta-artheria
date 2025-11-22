@@ -8,21 +8,53 @@ interface BrowserInstance {
   lastUsed: number;
 }
 
+// Usar globalThis para manter singleton entre hot reloads do Next.js
+const globalForBrowser = globalThis as unknown as {
+  browserInstance: BrowserInstance | null;
+  browserTimeoutId: NodeJS.Timeout | null;
+};
+
 class BrowserManager {
-  private static instance: BrowserInstance | null = null;
   private static readonly TIMEOUT = 30 * 60 * 1000; // 30 minutos de inatividade
-  private static timeoutId: NodeJS.Timeout | null = null;
+
+  private static get instance(): BrowserInstance | null {
+    return globalForBrowser.browserInstance || null;
+  }
+
+  private static set instance(value: BrowserInstance | null) {
+    globalForBrowser.browserInstance = value;
+  }
+
+  private static get timeoutId(): NodeJS.Timeout | null {
+    return globalForBrowser.browserTimeoutId || null;
+  }
+
+  private static set timeoutId(value: NodeJS.Timeout | null) {
+    globalForBrowser.browserTimeoutId = value;
+  }
 
   /**
    * Obtém ou cria uma instância do navegador
    */
   static async getInstance(): Promise<BrowserInstance> {
-    // Se já existe uma instância ativa, retorna ela
+    // Se já existe uma instância ativa, verifica se ainda está conectada
     if (this.instance) {
-      console.log("♻️ Reutilizando navegador existente");
-      this.instance.lastUsed = Date.now();
-      this.resetTimeout();
-      return this.instance;
+      try {
+        // Verifica se o browser ainda está conectado
+        const isConnected = this.instance.browser.connected;
+        if (isConnected) {
+          console.log("♻️ Reutilizando navegador existente (conectado)");
+          this.instance.lastUsed = Date.now();
+          this.resetTimeout();
+          return this.instance;
+        } else {
+          console.log("⚠️ Browser desconectado, criando novo...");
+          this.instance = null;
+        }
+      } catch (e) {
+        console.log("⚠️ Erro ao verificar browser, criando novo...");
+        this.instance = null;
+      }
     }
 
     console.log("🚀 Criando nova instância do navegador...");
@@ -84,6 +116,7 @@ class BrowserManager {
 
   /**
    * Verifica se já está logado no LinkedIn
+   * Método otimizado que evita navegação desnecessária
    */
   static async isLoggedIn(): Promise<boolean> {
     if (!this.instance) return false;
@@ -92,51 +125,82 @@ class BrowserManager {
       const { page } = this.instance;
       const currentUrl = page.url();
 
-      // Otimização: Se já estamos em uma página interna do LinkedIn (não login/authwall),
-      // verificamos se existe o menu de navegação global para confirmar login sem recarregar.
-      if (
-        currentUrl.includes("linkedin.com") &&
-        !currentUrl.includes("/login") &&
-        !currentUrl.includes("/authwall") &&
-        !currentUrl.includes("checkpoint")
-      ) {
+      console.log(`🔍 Verificando login. URL atual: ${currentUrl}`);
+
+      // Se a URL está em branco ou about:blank, precisamos navegar
+      if (!currentUrl || currentUrl === "about:blank" || !currentUrl.includes("linkedin.com")) {
+        console.log("📍 Navegando para LinkedIn para verificar sessão...");
+        await page.goto("https://www.linkedin.com/feed/", {
+          waitUntil: "domcontentloaded",
+          timeout: 15000,
+        });
+
+        const finalUrl = page.url();
+        const loggedIn = !finalUrl.includes("/login") && !finalUrl.includes("/authwall") && !finalUrl.includes("checkpoint");
+
+        this.instance.isLoggedIn = loggedIn;
+        console.log(loggedIn ? "✅ Sessão ativa" : "⚠️ Sessão expirada");
+        return loggedIn;
+      }
+
+      // Se estamos em página de login/authwall, não estamos logados
+      if (currentUrl.includes("/login") || currentUrl.includes("/authwall") || currentUrl.includes("checkpoint")) {
+        console.log("⚠️ Página de login detectada - não está logado");
+        this.instance.isLoggedIn = false;
+        return false;
+      }
+
+      // Se estamos em qualquer outra página do LinkedIn, verificamos o nav bar
+      if (currentUrl.includes("linkedin.com")) {
         try {
           // Verifica se o elemento de navegação global existe (indica usuário logado)
-          // Timeout curto pois deve estar visível se estivermos logados
-          await page.waitForSelector(".global-nav__content, #global-nav", {
-            timeout: 2000,
+          const navExists = await page.evaluate(() => {
+            return !!(
+              document.querySelector(".global-nav__content") ||
+              document.querySelector("#global-nav") ||
+              document.querySelector(".global-nav") ||
+              document.querySelector('[data-test-global-nav]')
+            );
           });
-          console.log("✅ Já logado (verificado via URL e seletor)");
+
+          if (navExists) {
+            console.log("✅ Já logado (nav bar detectada)");
+            this.instance.isLoggedIn = true;
+            return true;
+          }
+
+          // Se não encontrou nav bar, pode ser que a página ainda está carregando
+          // Aguarda um pouco e tenta novamente
+          await new Promise((r) => setTimeout(r, 1000));
+
+          const navExistsRetry = await page.evaluate(() => {
+            return !!(
+              document.querySelector(".global-nav__content") ||
+              document.querySelector("#global-nav") ||
+              document.querySelector(".global-nav")
+            );
+          });
+
+          if (navExistsRetry) {
+            console.log("✅ Já logado (nav bar detectada após retry)");
+            this.instance.isLoggedIn = true;
+            return true;
+          }
+
+          // Se ainda não encontrou, pode ser uma página específica, vamos confiar na URL
+          // Desde que não seja login/authwall
+          console.log("✅ Assumindo logado baseado na URL válida do LinkedIn");
           this.instance.isLoggedIn = true;
           return true;
         } catch (e) {
-          console.log(
-            "⚠️ URL interna mas sem nav bar, verificando via feed..."
-          );
+          console.log("⚠️ Erro ao verificar nav bar:", e);
+          // Em caso de erro, assumimos que está logado se a URL for válida
+          this.instance.isLoggedIn = true;
+          return true;
         }
       }
 
-      // Tenta acessar o feed do LinkedIn
-      await page.goto("https://www.linkedin.com/feed/", {
-        waitUntil: "domcontentloaded",
-        timeout: 10000,
-      });
-
-      const finalUrl = page.url();
-
-      // Se não redirecionou para login, está logado
-      const loggedIn =
-        !finalUrl.includes("/login") && !finalUrl.includes("/authwall");
-
-      this.instance.isLoggedIn = loggedIn;
-
-      if (loggedIn) {
-        console.log("✅ Sessão do LinkedIn ainda ativa");
-      } else {
-        console.log("⚠️ Sessão do LinkedIn expirada");
-      }
-
-      return loggedIn;
+      return false;
     } catch (error) {
       console.error("Erro ao verificar login:", error);
       return false;
@@ -251,6 +315,23 @@ class BrowserManager {
       this.instance.isLoggedIn = false;
     }
     await this.login(email, password);
+  }
+
+  /**
+   * Marca a sessão como logada (útil após login manual ou busca bem-sucedida)
+   */
+  static markAsLoggedIn(): void {
+    if (this.instance) {
+      this.instance.isLoggedIn = true;
+      console.log("✅ Sessão marcada como logada");
+    }
+  }
+
+  /**
+   * Retorna o status atual do login (sem verificar)
+   */
+  static getLoginStatus(): boolean {
+    return this.instance?.isLoggedIn || false;
   }
 }
 

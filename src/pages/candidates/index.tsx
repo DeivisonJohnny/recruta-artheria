@@ -11,7 +11,13 @@ import {
   Loader2,
   RefreshCw,
   Search,
+  CheckSquare,
+  Square,
+  Download,
+  X,
+  Eye,
 } from "lucide-react";
+import Link from "next/link";
 
 interface Candidate {
   id: string;
@@ -21,7 +27,16 @@ interface Candidate {
   location: string | null;
   photoUrl: string | null;
   about: string | null;
+  experience?: any[];
+  skills?: string[];
   createdAt: string;
+}
+
+interface ScrapeProgress {
+  current: number;
+  total: number;
+  status: "idle" | "scraping" | "done" | "error";
+  message?: string;
 }
 
 export default function CandidatesList() {
@@ -30,6 +45,12 @@ export default function CandidatesList() {
   const [loading, setLoading] = useState(true);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [scrapeProgress, setScrapeProgress] = useState<ScrapeProgress>({
+    current: 0,
+    total: 0,
+    status: "idle",
+  });
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -69,6 +90,90 @@ export default function CandidatesList() {
         searchTerm.toLowerCase()
       )
   );
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredCandidates.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredCandidates.map((c) => c.id)));
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  const hasDetailedData = (candidate: Candidate) => {
+    return (
+      (candidate.experience && candidate.experience.length > 0) ||
+      (candidate.skills && candidate.skills.length > 0)
+    );
+  };
+
+  const scrapeSelectedProfiles = async () => {
+    if (selectedIds.size === 0) {
+      toast.error("Selecione pelo menos um perfil");
+      return;
+    }
+
+    setScrapeProgress({
+      current: 0,
+      total: selectedIds.size,
+      status: "scraping",
+      message: "Iniciando coleta de detalhes...",
+    });
+
+    try {
+      const response = await fetch("/api/recrutaia/linkedin/scrape-details", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profileIds: Array.from(selectedIds) }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.requiresLogin) {
+          toast.error(data.message || "Sessão expirada. Faça uma busca primeiro.");
+          setScrapeProgress({ current: 0, total: 0, status: "error", message: data.message });
+          return;
+        }
+        throw new Error(data.message || "Erro ao coletar detalhes");
+      }
+
+      setScrapeProgress({
+        current: data.success,
+        total: data.total,
+        status: "done",
+        message: `${data.success} de ${data.total} perfis coletados com sucesso!`,
+      });
+
+      toast.success(`${data.success} perfis atualizados com sucesso!`);
+      clearSelection();
+      fetchCandidates();
+    } catch (error) {
+      console.error("Erro no scraping:", error);
+      toast.error("Erro ao coletar detalhes dos perfis");
+      setScrapeProgress({
+        current: 0,
+        total: 0,
+        status: "error",
+        message: "Erro durante a coleta",
+      });
+    }
+  };
 
   if (status === "loading") {
     return (
@@ -127,6 +232,83 @@ export default function CandidatesList() {
           </div>
         </div>
 
+        {/* Selection Bar */}
+        {filteredCandidates.length > 0 && (
+          <div className="bg-white rounded-lg border border-gray-200 p-3 mb-5 shadow-sm flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={toggleSelectAll}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                {selectedIds.size === filteredCandidates.length ? (
+                  <CheckSquare className="w-4 h-4 text-purple-600" />
+                ) : (
+                  <Square className="w-4 h-4 text-gray-500" />
+                )}
+                {selectedIds.size === filteredCandidates.length
+                  ? "Desmarcar todos"
+                  : "Selecionar todos"}
+              </button>
+              {selectedIds.size > 0 && (
+                <span className="text-sm text-gray-600">
+                  {selectedIds.size} selecionado(s)
+                </span>
+              )}
+            </div>
+
+            {selectedIds.size > 0 && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={clearSelection}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                  Limpar
+                </button>
+                <button
+                  onClick={scrapeSelectedProfiles}
+                  disabled={scrapeProgress.status === "scraping"}
+                  className="flex items-center gap-2 px-4 py-1.5 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {scrapeProgress.status === "scraping" ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Coletando...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4" />
+                      Coletar Detalhes
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Progress Bar */}
+        {scrapeProgress.status === "scraping" && (
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-5">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-purple-700">
+                {scrapeProgress.message}
+              </span>
+              <span className="text-sm text-purple-600">
+                {scrapeProgress.current}/{scrapeProgress.total}
+              </span>
+            </div>
+            <div className="w-full bg-purple-200 rounded-full h-2">
+              <div
+                className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                style={{
+                  width: `${(scrapeProgress.current / scrapeProgress.total) * 100}%`,
+                }}
+              />
+            </div>
+          </div>
+        )}
+
         {loading && candidates.length === 0 ? (
           <div className="flex justify-center py-10">
             <Loader2 className="w-7 h-7 text-purple-600 animate-spin" />
@@ -136,10 +318,23 @@ export default function CandidatesList() {
             {filteredCandidates.map((candidate) => (
               <div
                 key={candidate.id}
-                className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col"
+                onClick={() => toggleSelection(candidate.id)}
+                className={`bg-white rounded-lg border overflow-hidden hover:shadow-md transition-all flex flex-col cursor-pointer ${
+                  selectedIds.has(candidate.id)
+                    ? "border-purple-500 ring-2 ring-purple-200"
+                    : "border-gray-200"
+                }`}
               >
                 <div className="p-4 flex-1">
                   <div className="flex items-start gap-3 mb-3">
+                    {/* Checkbox */}
+                    <div className="flex-shrink-0 pt-0.5">
+                      {selectedIds.has(candidate.id) ? (
+                        <CheckSquare className="w-5 h-5 text-purple-600" />
+                      ) : (
+                        <Square className="w-5 h-5 text-gray-300" />
+                      )}
+                    </div>
                     {candidate.photoUrl ? (
                       <img
                         src={candidate.photoUrl}
@@ -152,12 +347,19 @@ export default function CandidatesList() {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <h3
-                        className="text-base font-semibold text-gray-900 truncate"
-                        title={candidate.fullName || ""}
-                      >
-                        {candidate.fullName || candidate.linkedinId}
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <h3
+                          className="text-base font-semibold text-gray-900 truncate"
+                          title={candidate.fullName || ""}
+                        >
+                          {candidate.fullName || candidate.linkedinId}
+                        </h3>
+                        {hasDetailedData(candidate) && (
+                          <span className="px-1.5 py-0.5 text-[10px] font-medium bg-green-100 text-green-700 rounded">
+                            Detalhado
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-gray-500 truncate">
                         {new Date(candidate.createdAt).toLocaleDateString(
                           "pt-BR"
@@ -190,15 +392,26 @@ export default function CandidatesList() {
                   <span className="text-xs text-gray-500 font-mono bg-white px-2 py-0.5 rounded border border-gray-200">
                     {candidate.linkedinId}
                   </span>
-                  <a
-                    href={`https://www.linkedin.com/in/${candidate.linkedinId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium hover:underline"
-                  >
-                    Ver Perfil
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
+                  <div className="flex items-center gap-3">
+                    <Link
+                      href={`/candidates/${candidate.linkedinId}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1 text-xs text-gray-600 hover:text-gray-800 font-medium hover:underline"
+                    >
+                      <Eye className="w-3 h-3" />
+                      Ver Detalhes
+                    </Link>
+                    <a
+                      href={`https://www.linkedin.com/in/${candidate.linkedinId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium hover:underline"
+                    >
+                      LinkedIn
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
                 </div>
               </div>
             ))}
