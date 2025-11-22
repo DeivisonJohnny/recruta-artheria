@@ -241,12 +241,43 @@ class BrowserManager {
         page.click('[type="submit"]'),
       ]);
 
-      const currentUrl = page.url();
+      let currentUrl = page.url();
 
-      if (currentUrl.includes("checkpoint/challenge")) {
-        throw new Error(
-          "Verificação de segurança necessária. Complete a verificação manualmente."
-        );
+      // Se detectar checkpoint/challenge, aguarda verificação manual
+      if (currentUrl.includes("checkpoint") || currentUrl.includes("challenge")) {
+        console.log("⚠️ ========================================");
+        console.log("⚠️ VERIFICAÇÃO DE SEGURANÇA NECESSÁRIA!");
+        console.log("⚠️ Complete a verificação manualmente no navegador.");
+        console.log("⚠️ Aguardando até 5 minutos...");
+        console.log("⚠️ ========================================");
+
+        // Aguarda até 5 minutos para o usuário completar a verificação
+        const maxWaitTime = 5 * 60 * 1000; // 5 minutos
+        const checkInterval = 3000; // Verifica a cada 3 segundos
+        const startTime = Date.now();
+
+        while (Date.now() - startTime < maxWaitTime) {
+          await new Promise((r) => setTimeout(r, checkInterval));
+
+          currentUrl = page.url();
+
+          // Se saiu da página de checkpoint, verificação foi completada
+          if (!currentUrl.includes("checkpoint") && !currentUrl.includes("challenge")) {
+            console.log("✅ Verificação de segurança completada!");
+            break;
+          }
+
+          const elapsed = Math.round((Date.now() - startTime) / 1000);
+          console.log(`⏳ Aguardando verificação... (${elapsed}s)`);
+        }
+
+        // Verifica se ainda está no checkpoint após o timeout
+        currentUrl = page.url();
+        if (currentUrl.includes("checkpoint") || currentUrl.includes("challenge")) {
+          throw new Error(
+            "Tempo limite excedido. Verificação de segurança não foi completada em 5 minutos."
+          );
+        }
       }
 
       if (currentUrl.includes("/login")) {
