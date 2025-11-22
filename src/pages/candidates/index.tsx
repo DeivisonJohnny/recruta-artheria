@@ -132,37 +132,55 @@ export default function CandidatesList() {
       current: 0,
       total: selectedIds.size,
       status: "scraping",
-      message: "Iniciando coleta de detalhes...",
+      message: "Iniciando coleta de detalhes com Scrapingdog...",
     });
 
     try {
-      const response = await fetch("/api/recrutaia/linkedin/scrape-details", {
+      // Map selected database IDs to LinkedIn IDs
+      const profilesToScrape = candidates
+        .filter((c) => selectedIds.has(c.id))
+        .map((c) => c.linkedinId)
+        .filter((id) => id); // Ensure we have valid IDs
+
+      if (profilesToScrape.length === 0) {
+        toast.error(
+          "Nenhum ID do LinkedIn válido encontrado para os perfis selecionados."
+        );
+        setScrapeProgress({ current: 0, total: 0, status: "idle" });
+        return;
+      }
+
+      // Use the new Scrapingdog endpoint
+      const response = await fetch("/api/recrutaia/linkedin/scrape-profiles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profileIds: Array.from(selectedIds) }),
+        body: JSON.stringify({ profiles: profilesToScrape }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        if (data.requiresLogin) {
-          toast.error(data.message || "Sessão expirada. Faça uma busca primeiro.");
-          setScrapeProgress({ current: 0, total: 0, status: "error", message: data.message });
-          return;
-        }
-        throw new Error(data.message || "Erro ao coletar detalhes");
+        throw new Error(data.error || "Erro ao coletar detalhes");
       }
 
+      // The new API returns { results: [...] }
+      const results = data.results || [];
+      const successCount = results.filter((r: any) => r.success).length;
+
       setScrapeProgress({
-        current: data.success,
-        total: data.total,
+        current: successCount,
+        total: selectedIds.size,
         status: "done",
-        message: `${data.success} de ${data.total} perfis coletados com sucesso!`,
+        message: `${successCount} de ${selectedIds.size} perfis coletados com sucesso!`,
       });
 
-      toast.success(`${data.success} perfis atualizados com sucesso!`);
-      clearSelection();
-      fetchCandidates();
+      if (successCount > 0) {
+        toast.success(`${successCount} perfis atualizados com sucesso!`);
+        clearSelection();
+        fetchCandidates();
+      } else {
+        toast.warning("Nenhum perfil foi atualizado com sucesso.");
+      }
     } catch (error) {
       console.error("Erro no scraping:", error);
       toast.error("Erro ao coletar detalhes dos perfis");
@@ -238,7 +256,7 @@ export default function CandidatesList() {
             <div className="flex items-center gap-3">
               <button
                 onClick={toggleSelectAll}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-black "
               >
                 {selectedIds.size === filteredCandidates.length ? (
                   <CheckSquare className="w-4 h-4 text-purple-600" />
@@ -302,7 +320,9 @@ export default function CandidatesList() {
               <div
                 className="bg-purple-600 h-2 rounded-full transition-all duration-300"
                 style={{
-                  width: `${(scrapeProgress.current / scrapeProgress.total) * 100}%`,
+                  width: `${
+                    (scrapeProgress.current / scrapeProgress.total) * 100
+                  }%`,
                 }}
               />
             </div>

@@ -47,7 +47,8 @@ export default function SearchCandidates() {
     setResults([]);
 
     try {
-      const response = await fetch("/api/recrutaia/search", {
+      // Use the new API endpoint
+      const response = await fetch("/api/recrutaia/linkedin/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -69,14 +70,26 @@ export default function SearchCandidates() {
 
       if (response.ok) {
         // Handle both data formats (data.data from new API or data.results from old)
-        const candidates = data.data || data.results || [];
+        // The new API returns { profiles: [...] }
+        let candidates = data.profiles || data.data || data.results || [];
+
+        // Normalize candidates data structure if needed
+        candidates = candidates.map((c: any) => ({
+          ...c,
+          // Map new API fields to frontend expected fields if they don't exist
+          title: c.title || c.headline,
+          imageUrl: c.imageUrl || c.photo_url,
+          profileUrl: c.profileUrl || c.profile_url || c.linkedinUrl,
+        }));
+
         setResults(candidates);
         setSearchId(data.searchId);
         toast.success(`Encontrados ${candidates.length} candidatos!`);
       } else {
-        toast.error(data.message || "Erro ao realizar pesquisa");
+        toast.error(data.message || data.error || "Erro ao realizar pesquisa");
       }
     } catch (error) {
+      console.error(error);
       toast.error("Erro ao realizar pesquisa");
     } finally {
       setLoading(false);
