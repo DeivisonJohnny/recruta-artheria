@@ -14,6 +14,7 @@ import {
   ChevronDown,
   ChevronRight,
   Users,
+  Brain,
 } from "lucide-react";
 import {
   Collapsible,
@@ -58,6 +59,7 @@ export default function Sidebar() {
     { name: "Banco de Talentos", href: "/candidates", icon: Users },
     { name: "Minhas Pesquisas", href: "/searches", icon: FileText },
     { name: "Vagas", href: "/jobs", icon: Briefcase },
+    { name: "Análise IA", href: "/analysis", icon: Brain },
   ];
 
   const isActive = (href: string) => router.pathname === href;
