@@ -1,5 +1,5 @@
 # 1. Base Image
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 
 # 2. Dependencies (Instala pacotes e gera cache)
 FROM base AS deps
