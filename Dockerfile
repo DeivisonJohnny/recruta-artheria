@@ -1,5 +1,5 @@
-# 1. Base Image - Usando alpine3.19 que é estável para Chromium e OpenSSL
-FROM node:20-alpine3.19 AS base
+# 1. Base Image - Usando alpine3.20 com Node.js 20.19+ compatível com Prisma 7
+FROM node:20-alpine3.20 AS base
 
 # 2. Dependencies - Instala todas as dependências (incluindo as necessárias para Prisma CLI)
 FROM base AS deps
