@@ -8,6 +8,13 @@ RUN apk add --no-cache libc6-compat
 COPY package.json yarn.lock ./
 RUN yarn --frozen-lockfile
 
+# 2.1 Production dependencies (sem devDependencies)
+FROM base AS prod-deps
+WORKDIR /app
+RUN apk add --no-cache libc6-compat
+COPY package.json yarn.lock ./
+RUN yarn --frozen-lockfile --production
+
 # 3. Builder
 FROM base AS builder
 WORKDIR /app
@@ -53,12 +60,12 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copia o Prisma e node_modules (com binários do Prisma)
+# Copia Prisma schema e os node_modules gerados pelo Prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.bin ./node_modules/.bin
+
+# Copia TODOS os node_modules de produção (inclui Prisma CLI e todas dependências)
+COPY --from=prod-deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 USER nextjs
 
