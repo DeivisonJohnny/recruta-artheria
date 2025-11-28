@@ -5,12 +5,16 @@ FROM node:20-alpine3.19 AS base
 FROM base AS deps
 WORKDIR /app
 RUN apk add --no-cache libc6-compat openssl
-COPY package.json yarn.lock ./
-RUN yarn --frozen-lockfile
+COPY package.json yarn.lock* ./
+RUN yarn --frozen-lockfile --production=false
 
 # 3. Builder
 FROM base AS builder
 WORKDIR /app
+
+# Instalar OpenSSL necessário para Prisma
+RUN apk add --no-cache libc6-compat openssl
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
@@ -38,10 +42,8 @@ RUN apk add --no-cache \
       harfbuzz \
       ca-certificates \
       ttf-freefont \
-      openssl
-
-# --- INSTALAÇÃO LOCAL DE DEPENDÊNCIAS PRISMA ---
-# Não instalamos globalmente para evitar problemas de permissão
+      openssl \
+      libc6-compat
 
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
@@ -53,16 +55,14 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copia Prisma schema e os node_modules completos (inclui Prisma CLI e todas dependências)
+# Copia Prisma schema e client gerado
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 
 USER nextjs
 
 EXPOSE 3000
 
-# --- COMANDO DE INICIALIZAÇÃO AUTOMÁTICO ---
-# 1. Roda migrations pendentes
-# 2. Roda o seed (se necessário)
-# 3. Inicia o servidor
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node_modules/.bin/prisma db seed || true && node server.js"]
+# --- COMANDO DE INICIALIZAÇÃO ---
+CMD ["node", "server.js"]
