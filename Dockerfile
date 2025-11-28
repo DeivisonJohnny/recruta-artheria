@@ -1,19 +1,12 @@
 # 1. Base Image - Usando alpine3.19 que é estável para Chromium e OpenSSL
 FROM node:20-alpine3.19 AS base
 
-# 2. Dependencies
+# 2. Dependencies - Instala todas as dependências (incluindo as necessárias para Prisma CLI)
 FROM base AS deps
 WORKDIR /app
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat openssl
 COPY package.json yarn.lock ./
 RUN yarn --frozen-lockfile
-
-# 2.1 Production dependencies (sem devDependencies)
-FROM base AS prod-deps
-WORKDIR /app
-RUN apk add --no-cache libc6-compat
-COPY package.json yarn.lock ./
-RUN yarn --frozen-lockfile --production
 
 # 3. Builder
 FROM base AS builder
@@ -60,12 +53,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copia Prisma schema e os node_modules gerados pelo Prisma
+# Copia Prisma schema e os node_modules completos (inclui Prisma CLI e todas dependências)
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-
-# Copia TODOS os node_modules de produção (inclui Prisma CLI e todas dependências)
-COPY --from=prod-deps --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 USER nextjs
 
@@ -75,4 +65,4 @@ EXPOSE 3000
 # 1. Roda migrations pendentes
 # 2. Roda o seed (se necessário)
 # 3. Inicia o servidor
-CMD sh -c "node_modules/.bin/prisma migrate deploy && node_modules/.bin/prisma db seed || true && node server.js"
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node_modules/.bin/prisma db seed || true && node server.js"]
