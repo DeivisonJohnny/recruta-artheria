@@ -29,7 +29,7 @@ export default async function handler(
           },
         },
         include: {
-          profile: true,
+          candidate: true,
           job: true,
         },
       });
