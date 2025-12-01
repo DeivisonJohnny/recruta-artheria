@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Users,
   Brain,
+  Upload,
 } from "lucide-react";
 import {
   Collapsible,
@@ -57,6 +58,7 @@ export default function Sidebar() {
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Pesquisar Candidatos", href: "/candidates/search", icon: Search },
     { name: "Banco de Talentos", href: "/candidates", icon: Users },
+    { name: "Upload de Currículos", href: "/resumes/upload", icon: Upload },
     { name: "Minhas Pesquisas", href: "/searches", icon: FileText },
     { name: "Vagas", href: "/jobs", icon: Briefcase },
     { name: "Análise IA", href: "/analysis", icon: Brain },

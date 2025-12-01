@@ -11,6 +11,7 @@ const pageTitle: Record<string, string> = {
   "/candidates/search": "Pesquisar Candidatos",
   "/searches": "Minhas Pesquisas",
   "/jobs": "Vagas",
+  "/resumes/upload": "Upload de Currículos",
 };
 
 export default function Layout({ children }: LayoutProps) {
