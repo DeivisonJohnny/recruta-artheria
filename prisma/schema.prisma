@@ -14,33 +14,76 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  searches Search[]
-  jobs     Job[]
+  searches   Search[]
+  jobs       Job[]
+  candidates Candidate[]
 
   @@map("users")
 }
 
-model LinkedInProfile {
-  id             String   @id @default(cuid())
-  linkedinId     String   @unique // ID do LinkedIn (ex: deivisonjohnny)
-  fullName       String?
-  headline       String?
-  location       String?
-  photoUrl       String?
-  about          String?
-  experience     Json? // Array de experiências
-  education      Json? // Array de educação
-  skills         Json? // Array de skills
+// Tabela unificada para candidatos de qualquer fonte
+model Candidate {
+  id     String @id @default(cuid())
+  userId String
+
+  // Campo que indica a origem do candidato
+  source String // "linkedin" | "resume" | "manual"
+
+  // Identificadores únicos por fonte
+  linkedinId  String? @unique // ID do LinkedIn (ex: deivisonjohnny) - apenas para source="linkedin"
+  linkedinUrl String? // URL completa do LinkedIn
+
+  // Dados pessoais (comum a todas as fontes)
+  fullName String?
+  email    String?
+  phone    String?
+  location String?
+  photoUrl String? // Foto de perfil (principalmente do LinkedIn)
+
+  // Perfil profissional
+  headline String? // Título profissional
+  about    String? // Resumo/Sobre/Objetivo profissional
+  summary  String? // Resumo profissional alternativo
+
+  // Dados estruturados (JSON)
+  experience     Json? // Array de experiências profissionais
+  education      Json? // Array de formação acadêmica
+  skills         Json? // Array de habilidades/competências
   languages      Json? // Array de idiomas
   certifications Json? // Array de certificações
-  rawData        Json? // Dados brutos da API do ScrapingDog
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  projects       Json? // Array de projetos
 
+  // URLs adicionais
+  portfolioUrl String?
+  githubUrl    String?
+
+  // Campos específicos para candidatos de currículo
+  resumeFileName String? // Nome do arquivo original do currículo
+  resumeFileUrl  String? // URL do arquivo no storage (futuro)
+
+  // Dados brutos e metadados
+  extractedData Json? // Dados brutos extraídos (IA ou scraping)
+  rawData       Json? // Dados brutos da API (ex: ScrapingDog)
+
+  // Status de processamento
+  processingStatus String? // "pending" | "processing" | "completed" | "failed"
+  processingError  String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relações
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   searchResults SearchResult[]
   jobCandidates JobCandidate[]
 
-  @@map("linkedin_profiles")
+  @@index([userId])
+  @@index([source])
+  @@index([email])
+  @@index([linkedinId])
+  @@index([processingStatus])
+  @@map("candidates")
 }
 
 model Search {
@@ -63,17 +106,17 @@ model Search {
 model SearchResult {
   id             String   @id @default(cuid())
   searchId       String
-  profileId      String
+  candidateId    String
   linkedinUrl    String // URL completa do perfil
   relevanceScore Float? // Score de relevância (opcional, para AI)
   createdAt      DateTime @default(now())
 
-  search  Search          @relation(fields: [searchId], references: [id], onDelete: Cascade)
-  profile LinkedInProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  search    Search    @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
 
-  @@unique([searchId, profileId])
+  @@unique([searchId, candidateId])
   @@index([searchId])
-  @@index([profileId])
+  @@index([candidateId])
   @@map("search_results")
 }
 
@@ -101,22 +144,22 @@ model Job {
 }
 
 model JobCandidate {
-  id         String   @id @default(cuid())
-  jobId      String
-  profileId  String
-  aiAnalysis String? // Análise do Gemini AI
-  matchScore Float? // Score de compatibilidade (0-100)
-  status     String   @default("pending") // pending, reviewed, contacted, rejected
-  notes      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String   @id @default(cuid())
+  jobId       String
+  candidateId String
+  aiAnalysis  String? // Análise do Gemini AI
+  matchScore  Float? // Score de compatibilidade (0-100)
+  status      String   @default("pending") // pending, reviewed, contacted, rejected
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  job     Job             @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  profile LinkedInProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  job       Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
 
-  @@unique([jobId, profileId])
+  @@unique([jobId, candidateId])
   @@index([jobId])
-  @@index([profileId])
+  @@index([candidateId])
   @@index([status])
   @@map("job_candidates")
 }
