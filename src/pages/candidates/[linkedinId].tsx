@@ -38,6 +38,8 @@ export default function CandidateProfile() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [fromCache, setFromCache] = useState(false);
   const [error, setError] = useState("");
+  const [scraping, setScraping] = useState(false);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -54,6 +56,7 @@ export default function CandidateProfile() {
   const fetchProfile = async (id: string) => {
     setLoading(true);
     setError("");
+    setNotFound(false);
 
     try {
       const response = await fetch(`/api/recrutaia/linkedin/profile/${id}`);
@@ -61,7 +64,10 @@ export default function CandidateProfile() {
 
       if (response.ok) {
         setProfile(data.profile);
-        setFromCache(data.fromCache);
+        setFromCache(data.fromCache !== undefined ? data.fromCache : false);
+      } else if (response.status === 404) {
+        setNotFound(true);
+        setError(data.message || "Perfil não encontrado");
       } else {
         setError(data.message || "Erro ao buscar perfil");
       }
@@ -69,6 +75,37 @@ export default function CandidateProfile() {
       setError("Erro ao buscar perfil");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const scrapeProfile = async () => {
+    if (!linkedinId || typeof linkedinId !== "string") return;
+
+    setScraping(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/recrutaia/linkedin/scrape-profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ linkedinId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setProfile(data.profile);
+        setNotFound(false);
+        setFromCache(false);
+      } else {
+        setError(data.message || "Erro ao fazer scraping do perfil");
+      }
+    } catch (err) {
+      setError("Erro ao fazer scraping do perfil");
+    } finally {
+      setScraping(false);
     }
   };
 
@@ -91,7 +128,7 @@ export default function CandidateProfile() {
     return null;
   }
 
-  if (error) {
+  if (error && !notFound) {
     return (
       <Layout>
         <div className="max-w-4xl mx-auto">
@@ -109,20 +146,42 @@ export default function CandidateProfile() {
     );
   }
 
-  if (!profile) {
+  if (notFound || (!profile && !loading)) {
     return (
       <Layout>
         <div className="max-w-4xl mx-auto">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 flex items-start gap-3">
-            <AlertCircle className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <h3 className="font-semibold text-yellow-900 mb-1">
-                Perfil não encontrado
-              </h3>
-              <p className="text-yellow-800">
-                O perfil solicitado não está disponível.
-              </p>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
+            <div className="flex items-start gap-3 mb-4">
+              <AlertCircle className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-yellow-900 mb-1">
+                  Perfil não encontrado
+                </h3>
+                <p className="text-yellow-800">
+                  O perfil solicitado não está no banco de dados.
+                </p>
+              </div>
             </div>
+            <button
+              onClick={scrapeProfile}
+              disabled={scraping}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {scraping ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Buscando perfil do LinkedIn...
+                </>
+              ) : (
+                <>
+                  <ExternalLink className="w-4 h-4" />
+                  Buscar perfil do LinkedIn
+                </>
+              )}
+            </button>
+            {error && (
+              <p className="mt-3 text-sm text-red-600">{error}</p>
+            )}
           </div>
         </div>
       </Layout>
