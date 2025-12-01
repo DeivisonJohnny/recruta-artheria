@@ -55,7 +55,7 @@ export default async function handler(
     const whereClause: Prisma.LinkedInProfileWhereInput =
       whereConditions.length > 0 ? { AND: whereConditions } : {};
 
-    const candidates = await prisma.linkedInProfile.findMany({
+    const candidates = await prisma.candidate.findMany({
       where: whereClause,
       orderBy: {
         createdAt: "desc",

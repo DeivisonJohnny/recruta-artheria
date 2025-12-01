@@ -18,7 +18,7 @@ export default async function handler(
   }
 
   try {
-    const candidates = await prisma.linkedInProfile.findMany({
+    const candidates = await prisma.candidate.findMany({
       orderBy: {
         createdAt: "desc",
       },

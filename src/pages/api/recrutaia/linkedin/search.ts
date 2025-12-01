@@ -187,8 +187,8 @@ export default async function handler(
             const linkedinId = profile.id;
             if (!linkedinId) continue;
 
-            // Upsert Profile
-            const dbProfile = await prisma.linkedInProfile.upsert({
+            // Upsert Profile (now using Candidate table)
+            const dbProfile = await prisma.candidate.upsert({
               where: { linkedinId },
               update: {
                 fullName: profile.name,
@@ -197,6 +197,8 @@ export default async function handler(
                 photoUrl: profile.photo_url,
               },
               create: {
+                userId: (session.user as any).id,
+                source: 'linkedin',
                 linkedinId,
                 fullName: profile.name,
                 headline: profile.headline,
@@ -208,15 +210,15 @@ export default async function handler(
             // Upsert SearchResult
             await prisma.searchResult.upsert({
               where: {
-                searchId_profileId: {
+                searchId_candidateId: {
                   searchId: search.id,
-                  profileId: dbProfile.id,
+                  candidateId: dbProfile.id,
                 },
               },
               update: { linkedinUrl: profile.profile_url },
               create: {
                 searchId: search.id,
-                profileId: dbProfile.id,
+                candidateId: dbProfile.id,
                 linkedinUrl: profile.profile_url,
               },
             });
@@ -341,8 +343,8 @@ async function oldHandler(req: NextApiRequest, res: NextApiResponse) {
 
         if (!linkedinId) continue;
 
-        // Upsert do perfil (Salvar ou Atualizar)
-        const profile = await prisma.linkedInProfile.upsert({
+        // Upsert do perfil (Salvar ou Atualizar) - now using Candidate table
+        const profile = await prisma.candidate.upsert({
           where: { linkedinId },
           update: {
             fullName: result.name,
@@ -353,6 +355,8 @@ async function oldHandler(req: NextApiRequest, res: NextApiResponse) {
             // Mantemos os dados existentes se não vierem novos
           },
           create: {
+            userId: (session.user as any).id,
+            source: 'linkedin',
             linkedinId,
             fullName: result.name,
             headline: result.title,
@@ -367,9 +371,9 @@ async function oldHandler(req: NextApiRequest, res: NextApiResponse) {
         // Usamos upsert aqui também para evitar duplicatas se rodar a mesma busca
         const searchResult = await prisma.searchResult.upsert({
           where: {
-            searchId_profileId: {
+            searchId_candidateId: {
               searchId: search.id,
-              profileId: profile.id,
+              candidateId: profile.id,
             },
           },
           update: {
@@ -377,7 +381,7 @@ async function oldHandler(req: NextApiRequest, res: NextApiResponse) {
           },
           create: {
             searchId: search.id,
-            profileId: profile.id,
+            candidateId: profile.id,
             linkedinUrl: result.profileUrl,
           },
         });

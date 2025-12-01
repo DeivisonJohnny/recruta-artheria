@@ -28,7 +28,7 @@ export default async function handler(
     console.log(`🔍 Iniciando scraping detalhado de ${profileIds.length} perfis`);
 
     // Busca os perfis no banco para obter as URLs
-    const profiles = await prisma.linkedInProfile.findMany({
+    const profiles = await prisma.candidate.findMany({
       where: {
         id: { in: profileIds },
       },
@@ -95,7 +95,7 @@ export default async function handler(
 
     for (const profile of scrapedProfiles) {
       try {
-        const updated = await prisma.linkedInProfile.update({
+        const updated = await prisma.candidate.update({
           where: { linkedinId: profile.linkedinId },
           data: {
             fullName: profile.fullName || undefined,

@@ -89,14 +89,14 @@ export default async function handler(
             api_key: apiKey,
             id: id,
             type: "profile",
-            premium: "false",
+            premium: "true",
             webhook: "false",
             fresh: "false",
           });
 
           const apiUrl = `https://api.scrapingdog.com/profile?${queryParams.toString()}`;
 
-          console.log(`Fetching profile from Scrapingdog: ${id}`);
+          console.log(`Fetching profile from Scrapingdog (premium): ${id}`);
 
           const response = await fetch(apiUrl);
           const responseData = await response.json();
@@ -108,92 +108,15 @@ export default async function handler(
               responseData.message || "Unknown error"
             );
 
-            // If non-premium fails, retry with premium=true
-            if (
-              responseData.message?.includes("premium=true") ||
-              responseData.message?.includes("Something went wrong")
-            ) {
-              console.log(`Retrying ${id} with premium=true...`);
-
-              const premiumParams = new URLSearchParams({
-                api_key: apiKey,
-                id: id,
-                type: "profile",
-                premium: "true",
-                webhook: "false",
-                fresh: "false",
-              });
-
-              const premiumUrl = `https://api.scrapingdog.com/profile?${premiumParams.toString()}`;
-              const premiumResponse = await fetch(premiumUrl);
-              const premiumData = await premiumResponse.json();
-
-              if (premiumData.success === false || premiumData.message) {
-                // Try one more time with fresh=true
-                console.log(
-                  `Retrying ${id} with premium=true and fresh=true...`
-                );
-
-                const freshParams = new URLSearchParams({
-                  api_key: apiKey,
-                  id: id,
-                  type: "profile",
-                  premium: "true",
-                  webhook: "false",
-                  fresh: "true",
-                });
-
-                const freshUrl = `https://api.scrapingdog.com/profile?${freshParams.toString()}`;
-                const freshResponse = await fetch(freshUrl);
-                const freshData = await freshResponse.json();
-
-                if (freshData.success === false || freshData.message) {
-                  // Check if it's a "try again later" message
-                  const isRetryLater =
-                    freshData.message?.includes("try again") ||
-                    freshData.message?.includes("2-3 minutes");
-                  return {
-                    id,
-                    error: freshData.message || "Failed to fetch profile",
-                    status: freshResponse.status,
-                    retryLater: isRetryLater,
-                  };
-                }
-
-                // Use fresh response
-                const freshProfileData: ScrapingdogProfile = Array.isArray(
-                  freshData
-                )
-                  ? freshData[0]
-                  : freshData;
-
-                if (
-                  !freshProfileData ||
-                  Object.keys(freshProfileData).length === 0
-                ) {
-                  return { id, error: "Profile not found", status: 404 };
-                }
-
-                return processProfileData(id, freshProfileData, prisma);
-              }
-
-              // Use premium response
-              const data: ScrapingdogProfile = Array.isArray(premiumData)
-                ? premiumData[0]
-                : premiumData;
-
-              if (!data || Object.keys(data).length === 0) {
-                return { id, error: "Profile not found", status: 404 };
-              }
-
-              // Continue with premium data (will be processed below)
-              return processProfileData(id, data, prisma);
-            }
+            const isRetryLater =
+              responseData.message?.includes("try again") ||
+              responseData.message?.includes("2-3 minutes");
 
             return {
               id,
               error: responseData.message || "Failed to fetch profile",
               status: response.status,
+              retryLater: isRetryLater,
             };
           }
 
@@ -219,7 +142,7 @@ export default async function handler(
             return { id, error: "Profile not found", status: 404 };
           }
 
-          return processProfileData(id, data, prisma);
+          return processProfileData(id, data, prisma, (session.user as any).id);
         } catch (err: any) {
           console.error(`Error processing profile ${rawId}:`, err);
           return { id: rawId, error: err.message || "Unknown error" };
@@ -263,12 +186,13 @@ function parseYear(dateObj: any): number | undefined {
 async function processProfileData(
   id: string,
   data: ScrapingdogProfile,
-  prismaClient: typeof prisma
+  prismaClient: typeof prisma,
+  userId: string
 ) {
   const linkedinId = data.public_identifier || data.profile_id || id;
 
   // Get existing profile from database to preserve non-empty fields
-  const existingProfile = await prismaClient.linkedInProfile.findUnique({
+  const existingProfile = await prismaClient.candidate.findUnique({
     where: { linkedinId },
   });
 
@@ -416,10 +340,12 @@ async function processProfileData(
       updateData.photoUrl = transformedProfile.photo_url;
     }
 
-    await prismaClient.linkedInProfile.upsert({
+    await prismaClient.candidate.upsert({
       where: { linkedinId },
       update: updateData,
       create: {
+        userId: userId,
+        source: 'linkedin',
         linkedinId,
         fullName: transformedProfile.name || existingProfile?.fullName || "",
         headline: transformedProfile.headline || existingProfile?.headline || "",

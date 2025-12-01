@@ -107,7 +107,7 @@ export default async function handler(
           }
 
           // Upsert do perfil (Salvar ou Atualizar)
-          const profile = await prisma.linkedInProfile.upsert({
+          const profile = await prisma.candidate.upsert({
             where: { linkedinId },
             update: {
               fullName: result.name,
@@ -133,9 +133,9 @@ export default async function handler(
           // Criar link com a pesquisa
           const searchResult = await prisma.searchResult.upsert({
             where: {
-              searchId_profileId: {
+              searchId_candidateId: {
                 searchId: search.id,
-                profileId: profile.id,
+                candidateId: profile.id,
               },
             },
             update: {
@@ -143,7 +143,7 @@ export default async function handler(
             },
             create: {
               searchId: search.id,
-              profileId: profile.id,
+              candidateId: profile.id,
               linkedinUrl: result.profileUrl,
             },
           });

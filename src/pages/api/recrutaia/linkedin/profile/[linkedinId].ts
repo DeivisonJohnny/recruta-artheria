@@ -3,6 +3,13 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../../auth/[...nextauth]";
 import { prisma } from "@/lib/prisma";
 
+/**
+ * GET /api/recrutaia/linkedin/profile/[linkedinId]
+ *
+ * Busca um candidato no banco de dados por ID ou linkedinId.
+ * Este endpoint APENAS retorna dados existentes no banco.
+ * Para fazer scraping de novos perfis do LinkedIn, use POST /api/recrutaia/linkedin/scrape-profile
+ */
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -21,85 +28,28 @@ export default async function handler(
     const { linkedinId } = req.query;
 
     if (!linkedinId || typeof linkedinId !== "string") {
-      return res.status(400).json({ message: "LinkedIn ID is required" });
+      return res.status(400).json({ message: "ID is required" });
     }
 
-    // Verificar se o perfil já existe no banco
-    let profile = await prisma.linkedInProfile.findUnique({
-      where: { linkedinId },
-    });
-
-    // Se o perfil existe e tem dados completos, retornar do cache
-    if (profile && profile.fullName && profile.rawData) {
-      return res.status(200).json({
-        profile: {
-          id: profile.id,
-          linkedinId: profile.linkedinId,
-          fullName: profile.fullName,
-          headline: profile.headline,
-          location: profile.location,
-          photoUrl: profile.photoUrl,
-          about: profile.about,
-          experience: profile.experience,
-          education: profile.education,
-          skills: profile.skills,
-          languages: profile.languages,
-          certifications: profile.certifications,
-        },
-        fromCache: true,
-      });
-    }
-
-    // Se não existe ou está incompleto, buscar da API do ScrapingDog
-    const scrapingDogApiKey = process.env.SCRAPINGDOG_API_KEY;
-
-    if (!scrapingDogApiKey) {
-      return res
-        .status(500)
-        .json({ message: "ScrapingDog API key not configured" });
-    }
-
-    const scrapingDogUrl = `https://api.scrapingdog.com/profile?api_key=${scrapingDogApiKey}&id=${linkedinId}&type=profile&premium=false&webhook=false&fresh=false`;
-
-    const response = await fetch(scrapingDogUrl);
-
-    if (!response.ok) {
-      return res.status(response.status).json({
-        message: "Failed to fetch profile from ScrapingDog",
-      });
-    }
-
-    const profileData = await response.json();
-
-    // Extrair dados relevantes da resposta do ScrapingDog
-    const extractedData = {
-      fullName: profileData.name || profileData.fullName || null,
-      headline: profileData.headline || null,
-      location: profileData.location || null,
-      photoUrl: profileData.photoUrl || profileData.profilePicture || null,
-      about: profileData.about || profileData.summary || null,
-      experience: profileData.experience || null,
-      education: profileData.education || null,
-      skills: profileData.skills || null,
-      languages: profileData.languages || null,
-      certifications: profileData.certifications || null,
-    };
-
-    // Salvar ou atualizar no banco
-    profile = await prisma.linkedInProfile.upsert({
-      where: { linkedinId },
-      update: {
-        ...extractedData,
-        rawData: profileData,
-        updatedAt: new Date(),
-      },
-      create: {
-        linkedinId,
-        ...extractedData,
-        rawData: profileData,
+    // Buscar perfil por ID ou linkedinId
+    const profile = await prisma.candidate.findFirst({
+      where: {
+        OR: [
+          { id: linkedinId },
+          { linkedinId },
+        ],
       },
     });
 
+    // Se não encontrou, retornar 404
+    if (!profile) {
+      return res.status(404).json({
+        message: "Profile not found",
+        suggestion: "Use POST /api/recrutaia/linkedin/scrape-profile to fetch from LinkedIn"
+      });
+    }
+
+    // Retornar dados do perfil
     return res.status(200).json({
       profile: {
         id: profile.id,
@@ -109,13 +59,22 @@ export default async function handler(
         location: profile.location,
         photoUrl: profile.photoUrl,
         about: profile.about,
+        summary: profile.summary,
         experience: profile.experience,
         education: profile.education,
         skills: profile.skills,
         languages: profile.languages,
         certifications: profile.certifications,
+        projects: profile.projects,
+        email: profile.email,
+        phone: profile.phone,
+        linkedinUrl: profile.linkedinUrl,
+        portfolioUrl: profile.portfolioUrl,
+        githubUrl: profile.githubUrl,
+        source: profile.source,
+        createdAt: profile.createdAt,
+        updatedAt: profile.updatedAt,
       },
-      fromCache: false,
     });
   } catch (error) {
     console.error("Profile fetch error:", error);
