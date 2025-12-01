@@ -43,10 +43,15 @@ export default async function handler(
       return res.status(404).json({ message: "No profiles found" });
     }
 
-    // Monta as URLs dos perfis
-    const profileUrls = profiles.map(
-      (p: { id: string; linkedinId: string; fullName: string | null }) =>
-        `https://www.linkedin.com/in/${p.linkedinId}`
+
+    const validProfiles = profiles.filter((p) => p.linkedinId !== null);
+
+    if (validProfiles.length === 0) {
+      return res.status(400).json({ message: "No valid LinkedIn profiles found" });
+    }
+
+    const profileUrls = validProfiles.map(
+      (p) => `https://www.linkedin.com/in/${p.linkedinId}`
     );
 
     // Inicializa o scraper (usa singleton do BrowserManager)

@@ -22,7 +22,7 @@ export default async function handler(
     const { query, skills, location, experience } = req.body;
 
     // Build dynamic where clause
-    const whereConditions: Prisma.LinkedInProfileWhereInput[] = [];
+    const whereConditions: Prisma.CandidateWhereInput[] = [];
 
     if (query && query.trim()) {
       const searchTerms = query.trim().toLowerCase();
@@ -52,7 +52,7 @@ export default async function handler(
     }
 
     // Build the final where clause
-    const whereClause: Prisma.LinkedInProfileWhereInput =
+    const whereClause: Prisma.CandidateWhereInput =
       whereConditions.length > 0 ? { AND: whereConditions } : {};
 
     const candidates = await prisma.candidate.findMany({

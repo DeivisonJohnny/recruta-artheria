@@ -2,9 +2,9 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../auth/[...nextauth]";
 import { prisma } from "@/lib/prisma";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 export default async function handler(
   req: NextApiRequest,
@@ -44,7 +44,7 @@ export default async function handler(
       const jobCandidates = await prisma.jobCandidate.findMany({
         where: whereClause,
         include: {
-          profile: true,
+          candidate: true,
         },
       });
 
@@ -52,11 +52,10 @@ export default async function handler(
         return res.status(400).json({ message: "No candidates found for this job" });
       }
 
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
       const results: any[] = [];
 
       for (const candidate of jobCandidates) {
-        const profile = candidate.profile;
+        const profile = candidate.candidate;
 
         // Formatar experiência detalhada
         const experienceList = Array.isArray(profile.experience)
@@ -324,9 +323,34 @@ Analise o candidato seguindo a metodologia abaixo e retorne APENAS um JSON váli
 }`;
 
         try {
-          const result = await model.generateContent(prompt);
-          const response = result.response;
-          const text = response.text();
+
+          const generateWithRetry = async (maxRetries = 3) => {
+            for (let attempt = 0; attempt <= maxRetries; attempt++) {
+              try {
+                return await genAI.models.generateContent({
+                  model: "gemini-2.5-flash",
+                  contents: prompt,
+                });
+              } catch (error: any) {
+       
+                if (error.status === 429 && attempt < maxRetries) {
+                  const retryMatch = error.message?.match(/retry in ([\d.]+)s/);
+                  const retryDelay = retryMatch
+                    ? parseFloat(retryMatch[1]) * 1000
+                    : Math.pow(2, attempt) * 1000; 
+
+                  console.log(`Rate limit hit, retrying in ${retryDelay}ms (attempt ${attempt + 1}/${maxRetries})...`);
+                  await new Promise(resolve => setTimeout(resolve, retryDelay));
+                  continue;
+                }
+                throw error; 
+              }
+            }
+            throw new Error("Max retries exceeded");
+          };
+
+          const result = await generateWithRetry();
+          const text = result.text || "";
 
           let jsonText = text.trim();
           if (jsonText.startsWith("```json")) {

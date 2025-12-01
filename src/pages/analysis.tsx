@@ -34,11 +34,11 @@ interface LinkedInProfile {
 
 interface JobCandidate {
   id: string;
-  profileId: string;
+  candidateId: string;
   aiAnalysis: string | null;
   matchScore: number | null;
   status: string;
-  profile: LinkedInProfile;
+  candidate: LinkedInProfile;
 }
 
 interface Job {
@@ -448,10 +448,10 @@ export default function AnalysisPage() {
                               onChange={() => {}}
                               className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
                             />
-                            {candidate.profile.photoUrl ? (
+                            {candidate.candidate.photoUrl ? (
                               <img
-                                src={candidate.profile.photoUrl}
-                                alt={candidate.profile.fullName || ""}
+                                src={candidate.candidate.photoUrl}
+                                alt={candidate.candidate.fullName || ""}
                                 className="w-10 h-10 rounded-full object-cover border border-gray-200"
                               />
                             ) : (
@@ -461,10 +461,10 @@ export default function AnalysisPage() {
                             )}
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-gray-900 truncate">
-                                {candidate.profile.fullName || candidate.profile.linkedinId}
+                                {candidate.candidate.fullName || candidate.candidate.linkedinId}
                               </p>
                               <p className="text-xs text-gray-500 truncate">
-                                {candidate.profile.headline || "Sem título"}
+                                {candidate.candidate.headline || "Sem título"}
                               </p>
                             </div>
                             <div className="flex items-center gap-2">

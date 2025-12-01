@@ -117,7 +117,10 @@ export default async function handler(
               about: result.summary,
             },
             create: {
+              userId: (session.user as any).id,
+              source: "linkedin",
               linkedinId,
+              linkedinUrl: result.profileUrl,
               fullName: result.name,
               headline: result.title,
               location: result.location || location,

@@ -32,7 +32,7 @@ export default async function handler(
       include: {
         results: {
           include: {
-            profile: true,
+            candidate: true,
           },
           orderBy: {
             createdAt: "desc",

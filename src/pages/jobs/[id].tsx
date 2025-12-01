@@ -59,12 +59,12 @@ const hasDetailedData = (profile: LinkedInProfile) => {
 
 interface JobCandidate {
   id: string;
-  profileId: string;
+  candidateId: string;
   aiAnalysis: string | null;
   matchScore: number | null;
   status: string;
   notes: string | null;
-  profile: LinkedInProfile;
+  candidate: LinkedInProfile;
 }
 
 interface JobDetail {
@@ -273,7 +273,7 @@ export default function JobDetailPage() {
       if (response.ok) {
         // Filter out candidates already linked to this job
         const linkedIds = new Set(
-          job?.candidates.map((c) => c.profile.id) || []
+          job?.candidates.map((c) => c.candidate.id) || []
         );
         const filteredResults = data.candidates.filter(
           (c: LinkedInProfile) => !linkedIds.has(c.id)
@@ -343,7 +343,7 @@ export default function JobDetailPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          profileIds: Array.from(selectedIds),
+          candidateIds: Array.from(selectedIds),
         }),
       });
 
@@ -368,13 +368,13 @@ export default function JobDetailPage() {
   const filteredCandidates =
     job?.candidates.filter((candidate) => {
       const matchesSearch =
-        (candidate.profile.fullName?.toLowerCase() || "").includes(
+        (candidate.candidate.fullName?.toLowerCase() || "").includes(
           searchTerm.toLowerCase()
         ) ||
-        (candidate.profile.headline?.toLowerCase() || "").includes(
+        (candidate.candidate.headline?.toLowerCase() || "").includes(
           searchTerm.toLowerCase()
         ) ||
-        (candidate.profile.location?.toLowerCase() || "").includes(
+        (candidate.candidate.location?.toLowerCase() || "").includes(
           searchTerm.toLowerCase()
         );
 
@@ -654,10 +654,10 @@ export default function JobDetailPage() {
               >
                 <div className="p-4 flex-1">
                   <div className="flex items-start gap-3 mb-3">
-                    {candidate.profile.photoUrl ? (
+                    {candidate.candidate.photoUrl ? (
                       <img
-                        src={candidate.profile.photoUrl}
-                        alt={candidate.profile.fullName || "Candidato"}
+                        src={candidate.candidate.photoUrl}
+                        alt={candidate.candidate.fullName || "Candidato"}
                         className="w-12 h-12 rounded-full object-cover border border-gray-100 shadow-sm"
                       />
                     ) : (
@@ -668,10 +668,10 @@ export default function JobDetailPage() {
                     <div className="flex-1 min-w-0">
                       <h3
                         className="text-base font-semibold text-gray-900 truncate"
-                        title={candidate.profile.fullName || ""}
+                        title={candidate.candidate.fullName || ""}
                       >
-                        {candidate.profile.fullName ||
-                          candidate.profile.linkedinId}
+                        {candidate.candidate.fullName ||
+                          candidate.candidate.linkedinId}
                       </h3>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         {getStatusBadge(candidate.status)}
@@ -685,7 +685,7 @@ export default function JobDetailPage() {
                             {candidate.matchScore}%
                           </span>
                         )}
-                        {hasDetailedData(candidate.profile) ? (
+                        {hasDetailedData(candidate.candidate) ? (
                           <span className="flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 text-xs rounded-full border border-emerald-200">
                             <CheckCircle2 className="w-3 h-3" />
                             Detalhado
@@ -702,13 +702,13 @@ export default function JobDetailPage() {
 
                   <div className="space-y-1.5 mb-3">
                     <p className="text-sm font-medium text-gray-800 line-clamp-2 min-h-[2.5rem]">
-                      {candidate.profile.headline || "Sem título definido"}
+                      {candidate.candidate.headline || "Sem título definido"}
                     </p>
 
                     <div className="flex items-center gap-1.5 text-xs text-gray-500">
                       <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                       <span className="truncate">
-                        {candidate.profile.location ||
+                        {candidate.candidate.location ||
                           "Localização não informada"}
                       </span>
                     </div>
@@ -726,18 +726,18 @@ export default function JobDetailPage() {
 
                 <div className="p-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
                   <span className="text-xs text-gray-500 font-mono bg-white px-2 py-0.5 rounded border border-gray-200">
-                    {candidate.profile.linkedinId}
+                    {candidate.candidate.linkedinId}
                   </span>
                   <div className="flex items-center gap-3">
                     <Link
-                      href={`/candidates/${candidate.profile.linkedinId}`}
+                      href={`/candidates/${candidate.candidate.linkedinId}`}
                       className="inline-flex items-center gap-1 text-xs text-gray-600 hover:text-gray-800 font-medium hover:underline"
                     >
                       <Eye className="w-3 h-3" />
                       Ver Detalhes
                     </Link>
                     <a
-                      href={`https://www.linkedin.com/in/${candidate.profile.linkedinId}`}
+                      href={`https://www.linkedin.com/in/${candidate.candidate.linkedinId}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium hover:underline"

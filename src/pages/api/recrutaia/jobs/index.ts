@@ -22,7 +22,7 @@ export default async function handler(
         include: {
           candidates: {
             include: {
-              profile: true,
+              candidate: true,
             },
           },
         },

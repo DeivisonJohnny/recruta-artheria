@@ -175,7 +175,7 @@ interface JobCandidate {
   matchScore: number | null;
   aiAnalysis: string | null;
   status: string;
-  profile: {
+  candidate: {
     id: string;
     linkedinId: string;
     fullName: string | null;
@@ -376,10 +376,10 @@ export default function AnalysisDetailPage() {
           {/* Candidate Info Card */}
           <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
             <div className="flex items-start gap-4">
-              {candidate.profile.photoUrl ? (
+              {candidate.candidate.photoUrl ? (
                 <img
-                  src={candidate.profile.photoUrl}
-                  alt={candidate.profile.fullName || ""}
+                  src={candidate.candidate.photoUrl}
+                  alt={candidate.candidate.fullName || ""}
                   className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
                 />
               ) : (
@@ -391,13 +391,13 @@ export default function AnalysisDetailPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <h1 className="text-2xl font-bold text-gray-900">
-                      {candidate.profile.fullName || candidate.profile.linkedinId}
+                      {candidate.candidate.fullName || candidate.candidate.linkedinId}
                     </h1>
-                    <p className="text-gray-600 mt-0.5">{candidate.profile.headline}</p>
-                    {candidate.profile.location && (
+                    <p className="text-gray-600 mt-0.5">{candidate.candidate.headline}</p>
+                    {candidate.candidate.location && (
                       <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
                         <MapPin className="w-3.5 h-3.5" />
-                        {candidate.profile.location}
+                        {candidate.candidate.location}
                       </p>
                     )}
                   </div>
@@ -430,7 +430,7 @@ export default function AnalysisDetailPage() {
                     Vaga: <span className="font-medium">{candidate.job.title}</span>
                   </span>
                   <a
-                    href={`https://linkedin.com/in/${candidate.profile.linkedinId}`}
+                    href={`https://linkedin.com/in/${candidate.candidate.linkedinId}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1 text-purple-600 hover:text-purple-800"

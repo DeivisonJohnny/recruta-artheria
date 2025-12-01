@@ -146,7 +146,7 @@ export default function CandidateProfile() {
     );
   }
 
-  if (notFound || (!profile && !loading)) {
+  if (notFound || !profile) {
     return (
       <Layout>
         <div className="max-w-4xl mx-auto">

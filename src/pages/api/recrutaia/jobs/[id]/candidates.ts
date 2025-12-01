@@ -34,37 +34,37 @@ export default async function handler(
   if (req.method === "POST") {
     // Add candidates to job
     try {
-      const { profileIds } = req.body;
+      const { candidateIds } = req.body;
 
-      if (!Array.isArray(profileIds) || profileIds.length === 0) {
-        return res.status(400).json({ message: "Profile IDs are required" });
+      if (!Array.isArray(candidateIds) || candidateIds.length === 0) {
+        return res.status(400).json({ message: "Candidate IDs are required" });
       }
 
       // Create job candidates (skip duplicates)
       const results = await Promise.all(
-        profileIds.map(async (profileId: string) => {
+        candidateIds.map(async (candidateId: string) => {
           try {
-            const candidate = await prisma.jobCandidate.upsert({
+            const jobCandidate = await prisma.jobCandidate.upsert({
               where: {
-                jobId_profileId: {
+                jobId_candidateId: {
                   jobId: id,
-                  profileId,
+                  candidateId,
                 },
               },
               update: {}, // No update needed if already exists
               create: {
                 jobId: id,
-                profileId,
+                candidateId,
                 status: "pending",
               },
               include: {
-                profile: true,
+                candidate: true,
               },
             });
-            return { success: true, candidate };
+            return { success: true, candidate: jobCandidate };
           } catch (error) {
-            console.error(`Error adding candidate ${profileId}:`, error);
-            return { success: false, profileId, error: "Failed to add candidate" };
+            console.error(`Error adding candidate ${candidateId}:`, error);
+            return { success: false, candidateId, error: "Failed to add candidate" };
           }
         })
       );
@@ -85,17 +85,17 @@ export default async function handler(
   if (req.method === "DELETE") {
     // Remove candidate from job
     try {
-      const { profileId } = req.body;
+      const { candidateId } = req.body;
 
-      if (!profileId) {
-        return res.status(400).json({ message: "Profile ID is required" });
+      if (!candidateId) {
+        return res.status(400).json({ message: "Candidate ID is required" });
       }
 
       await prisma.jobCandidate.delete({
         where: {
-          jobId_profileId: {
+          jobId_candidateId: {
             jobId: id,
-            profileId,
+            candidateId,
           },
         },
       });

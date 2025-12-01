@@ -37,10 +37,10 @@ interface LinkedInProfile {
 
 interface SearchResult {
   id: string;
-  profileId: string;
+  candidateId: string;
   linkedinUrl: string;
   relevanceScore: number | null;
-  profile: LinkedInProfile;
+  candidate: LinkedInProfile;
 }
 
 interface SearchDetail {
@@ -111,13 +111,13 @@ export default function SearchDetailPage() {
 
   const filteredResults = search?.results.filter(
     (result) =>
-      (result.profile.fullName?.toLowerCase() || "").includes(
+      (result.candidate.fullName?.toLowerCase() || "").includes(
         searchTerm.toLowerCase()
       ) ||
-      (result.profile.headline?.toLowerCase() || "").includes(
+      (result.candidate.headline?.toLowerCase() || "").includes(
         searchTerm.toLowerCase()
       ) ||
-      (result.profile.location?.toLowerCase() || "").includes(
+      (result.candidate.location?.toLowerCase() || "").includes(
         searchTerm.toLowerCase()
       )
   ) || [];
@@ -138,7 +138,7 @@ export default function SearchDetailPage() {
     if (selectedIds.size === filteredResults.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filteredResults.map((r) => r.profile.id)));
+      setSelectedIds(new Set(filteredResults.map((r) => r.candidate.id)));
     }
   };
 
@@ -168,8 +168,8 @@ export default function SearchDetailPage() {
 
     try {
       const profilesToScrape = filteredResults
-        .filter((r) => selectedIds.has(r.profile.id))
-        .map((r) => r.profile.linkedinId)
+        .filter((r) => selectedIds.has(r.candidate.id))
+        .map((r) => r.candidate.linkedinId)
         .filter((id) => id);
 
       if (profilesToScrape.length === 0) {
@@ -412,9 +412,9 @@ export default function SearchDetailPage() {
             {filteredResults.map((result) => (
               <div
                 key={result.id}
-                onClick={() => toggleSelection(result.profile.id)}
+                onClick={() => toggleSelection(result.candidate.id)}
                 className={`bg-white rounded-lg border overflow-hidden hover:shadow-md transition-all flex flex-col cursor-pointer ${
-                  selectedIds.has(result.profile.id)
+                  selectedIds.has(result.candidate.id)
                     ? "border-emerald-500 ring-2 ring-emerald-200"
                     : "border-gray-200"
                 }`}
@@ -422,16 +422,16 @@ export default function SearchDetailPage() {
                 <div className="p-4 flex-1">
                   <div className="flex items-start gap-3 mb-3">
                     <div className="flex-shrink-0 pt-0.5">
-                      {selectedIds.has(result.profile.id) ? (
+                      {selectedIds.has(result.candidate.id) ? (
                         <CheckSquare className="w-5 h-5 text-emerald-600" />
                       ) : (
                         <Square className="w-5 h-5 text-gray-300" />
                       )}
                     </div>
-                    {result.profile.photoUrl ? (
+                    {result.candidate.photoUrl ? (
                       <img
-                        src={result.profile.photoUrl}
-                        alt={result.profile.fullName || "Candidato"}
+                        src={result.candidate.photoUrl}
+                        alt={result.candidate.fullName || "Candidato"}
                         className="w-12 h-12 rounded-full object-cover border border-gray-100 shadow-sm"
                       />
                     ) : (
@@ -443,49 +443,49 @@ export default function SearchDetailPage() {
                       <div className="flex items-center gap-2">
                         <h3
                           className="text-base font-semibold text-gray-900 truncate"
-                          title={result.profile.fullName || ""}
+                          title={result.candidate.fullName || ""}
                         >
-                          {result.profile.fullName || result.profile.linkedinId}
+                          {result.candidate.fullName || result.candidate.linkedinId}
                         </h3>
-                        {hasDetailedData(result.profile) && (
+                        {hasDetailedData(result.candidate) && (
                           <span className="px-1.5 py-0.5 text-[10px] font-medium bg-green-100 text-green-700 rounded">
                             Detalhado
                           </span>
                         )}
                       </div>
                       <p className="text-xs text-gray-500 truncate">
-                        {new Date(result.profile.createdAt).toLocaleDateString("pt-BR")}
+                        {new Date(result.candidate.createdAt).toLocaleDateString("pt-BR")}
                       </p>
                     </div>
                   </div>
 
                   <div className="space-y-1.5 mb-3">
                     <p className="text-sm font-medium text-gray-800 line-clamp-2 min-h-[2.5rem]">
-                      {result.profile.headline || "Sem título definido"}
+                      {result.candidate.headline || "Sem título definido"}
                     </p>
 
                     <div className="flex items-center gap-1.5 text-xs text-gray-500">
                       <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                       <span className="truncate">
-                        {result.profile.location || "Localização não informada"}
+                        {result.candidate.location || "Localização não informada"}
                       </span>
                     </div>
                   </div>
 
-                  {result.profile.about && (
+                  {result.candidate.about && (
                     <p className="text-xs text-gray-600 line-clamp-3 mb-3 bg-gray-50 p-2.5 rounded-lg">
-                      {result.profile.about}
+                      {result.candidate.about}
                     </p>
                   )}
                 </div>
 
                 <div className="p-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
                   <span className="text-xs text-gray-500 font-mono bg-white px-2 py-0.5 rounded border border-gray-200">
-                    {result.profile.linkedinId}
+                    {result.candidate.linkedinId}
                   </span>
                   <div className="flex items-center gap-3">
                     <Link
-                      href={`/candidates/${result.profile.linkedinId}`}
+                      href={`/candidates/${result.candidate.linkedinId}`}
                       onClick={(e) => e.stopPropagation()}
                       className="inline-flex items-center gap-1 text-xs text-gray-600 hover:text-gray-800 font-medium hover:underline"
                     >
@@ -493,7 +493,7 @@ export default function SearchDetailPage() {
                       Ver Detalhes
                     </Link>
                     <a
-                      href={`https://www.linkedin.com/in/${result.profile.linkedinId}`}
+                      href={`https://www.linkedin.com/in/${result.candidate.linkedinId}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
